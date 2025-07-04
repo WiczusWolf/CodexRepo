@@ -45,61 +45,55 @@ namespace MyConsoleApp
 			}
 		}
 
-		public void PushFront(T item)
-		{
-			int start = (_starts[0] - 1 + _size) % _size;
-			bool removed = false;
-			T removedValue = _arrays[0][start];
-			if (_filledCount == _size)
-			{
-				removed = true;
-			}
-			else
-			{
-				_filledCount++;
-			}
+                public void PushFront(T item)
+                {
+                        PushToLevel(0, item);
+                }
 
-			_starts[0] = start;
-			_arrays[0][start] = item;
+                private void PushToLevel(int level, T item)
+                {
+                        if (level >= _partitions)
+                                return;
 
-			_sums[0] += item;
-			_counts[0]++;
+                        int start = (_starts[level] - 1 + _size) % _size;
+                        T removedValue = _arrays[level][start];
+                        bool removed = false;
 
-			if (_counts[0] >= _increase)
-			{
-				T avg = _sums[0] / T.CreateChecked(_increase);
-				_sums[0] = T.Zero;
-				_counts[0] = 0;
-				PushToLevel(1, avg);
-			}
+                        if (level == 0)
+                        {
+                                if (_filledCount == _size)
+                                {
+                                        removed = true;
+                                }
+                                else
+                                {
+                                        _filledCount++;
+                                }
+                        }
 
-			OnItemAdded?.Invoke(item);
-			if (removed)
-			{
-				OnItemRemoved?.Invoke(removedValue);
-			}
-		}
+                        _starts[level] = start;
+                        _arrays[level][start] = item;
 
-		private void PushToLevel(int level, T item)
-		{
-			if (level >= _partitions)
-				return;
+                        _sums[level] += item;
+                        _counts[level]++;
 
-			int start = (_starts[level] - 1 + _size) % _size;
-			_starts[level] = start;
-			_arrays[level][start] = item;
+                        if (_counts[level] >= _increase)
+                        {
+                                T avg = _sums[level] / T.CreateChecked(_increase);
+                                _sums[level] = T.Zero;
+                                _counts[level] = 0;
+                                PushToLevel(level + 1, avg);
+                        }
 
-			_sums[level] += item;
-			_counts[level]++;
-
-			if (_counts[level] >= _increase)
-			{
-				T avg = _sums[level] / T.CreateChecked(_increase);
-				_sums[level] = T.Zero;
-				_counts[level] = 0;
-				PushToLevel(level + 1, avg);
-			}
-		}
+                        if (level == 0)
+                        {
+                                OnItemAdded?.Invoke(item);
+                                if (removed)
+                                {
+                                        OnItemRemoved?.Invoke(removedValue);
+                                }
+                        }
+                }
 
 		public T this[int partition, int index]
 		{
