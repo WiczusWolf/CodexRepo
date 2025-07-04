@@ -11,11 +11,11 @@ namespace MyConsoleApp
 		private readonly T[][] _arrays;
 		private readonly int[] _starts;
 		private readonly T[] _sums;
-		private readonly int[] _counts;
-		private int _filledCount;
+               private readonly int[] _counts;
+               private readonly int[] _filledCounts;
 
-		public readonly EventHandlerSync<T> OnItemAdded = new();
-		public readonly EventHandlerSync<T> OnItemRemoved = new();
+               public readonly EventHandlerSync<T>[] OnValueAdded;
+               public readonly EventHandlerSync<T>[] OnValueRemoved;
 
 		public int Partitions => _partitions;
 		public int Size => _size;
@@ -30,18 +30,23 @@ namespace MyConsoleApp
 			_partitions = partitions;
 			_size = size;
 			_increase = increase;
-			_arrays = new T[partitions][];
-			_starts = new int[partitions];
-			_sums = new T[partitions];
-			_counts = new int[partitions];
-			_filledCount = 0;
+                       _arrays = new T[partitions][];
+                       _starts = new int[partitions];
+                       _sums = new T[partitions];
+                       _counts = new int[partitions];
+                       _filledCounts = new int[partitions];
+                       OnValueAdded = new EventHandlerSync<T>[partitions];
+                       OnValueRemoved = new EventHandlerSync<T>[partitions];
 
 			for (int i = 0; i < partitions; i++)
 			{
-				_arrays[i] = new T[size];
-				_starts[i] = 0;
-				_sums[i] = T.Zero;
-				_counts[i] = 0;
+                       _arrays[i] = new T[size];
+                       _starts[i] = 0;
+                       _sums[i] = T.Zero;
+                       _counts[i] = 0;
+                       _filledCounts[i] = 0;
+                       OnValueAdded[i] = new EventHandlerSync<T>();
+                       OnValueRemoved[i] = new EventHandlerSync<T>();
 			}
 		}
 
@@ -56,20 +61,17 @@ namespace MyConsoleApp
 				return;
 
 			int start = (_starts[level] - 1 + _size) % _size;
-			T removedValue = _arrays[level][start];
-			bool removed = false;
+                       T removedValue = _arrays[level][start];
+                       bool removed = false;
 
-			if (level == 0)
-			{
-				if (_filledCount == _size)
-				{
-					removed = true;
-				}
-				else
-				{
-					_filledCount++;
-				}
-			}
+                       if (_filledCounts[level] == _size)
+                       {
+                               removed = true;
+                       }
+                       else
+                       {
+                               _filledCounts[level]++;
+                       }
 
 			_starts[level] = start;
 			_arrays[level][start] = item;
@@ -85,15 +87,12 @@ namespace MyConsoleApp
 				PushToLevel(level + 1, avg);
 			}
 
-			if (level == 0)
-			{
-				OnItemAdded?.Invoke(item);
-				if (removed)
-				{
-					OnItemRemoved?.Invoke(removedValue);
-				}
-			}
-		}
+                       OnValueAdded[level].Invoke(item);
+                       if (removed)
+                       {
+                               OnValueRemoved[level].Invoke(removedValue);
+                       }
+               }
 
 		public T this[int partition, int index]
 		{

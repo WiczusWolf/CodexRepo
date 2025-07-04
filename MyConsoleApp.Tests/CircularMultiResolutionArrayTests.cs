@@ -79,22 +79,22 @@ public class CircularMultiResolutionArrayTests
 
 
 	[TestMethod]
-	public void OnItemAddedIsInvokedWithAddedValue()
+	public void OnValueAddedIsInvokedWithAddedValue()
 	{
 		var arr = new CircularMultiResolutionArray<float>(1, 2, 2);
 		float? added = null;
-		arr.OnItemAdded.Add(i => added = i);
+		arr.OnValueAdded[0].Add(i => added = i);
 		arr.PushFront(42f);
 		Assert.AreEqual(42f, added);
 	}
 
 	[TestMethod]
-	public void OnItemRemovedIsInvokedWhenItemIsOverwritten()
+	public void OnValueRemovedIsInvokedWhenItemIsOverwritten()
 	{
 		var arr = new CircularMultiResolutionArray<float>(1, 2, 2);
 		float? removed = null;
 
-		arr.OnItemRemoved.Add(i => removed = i);
+		arr.OnValueRemoved[0].Add(i => removed = i);
 
 		arr.PushFront(1f);
 		arr.PushFront(2f);
@@ -102,4 +102,15 @@ public class CircularMultiResolutionArrayTests
 		Assert.AreEqual(1f, removed);
 	}
 
+
+	[TestMethod]
+	public void OnValueAddedIsInvokedForLowerPartition()
+	{
+		var arr = new CircularMultiResolutionArray<float>(2, 2, 2);
+		float? added = null;
+		arr.OnValueAdded[1].Add(i => added = i);
+		arr.PushFront(1f);
+		arr.PushFront(3f); // triggers average 2
+		Assert.AreEqual(2f, added);
+	}
 }
