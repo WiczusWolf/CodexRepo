@@ -77,4 +77,26 @@ public class CircularMultiResolutionArrayTests
                 Assert.AreEqual(6, arr[2, 3]);
         }
 
+        [TestMethod]
+        public void OnItemAddedIsInvokedWithAddedValue()
+        {
+                var arr = new CircularMultiResolutionArray<int>(1, 2, 2);
+                int? added = null;
+                arr.OnItemAdded += i => added = i;
+                arr.PushFront(42);
+                Assert.AreEqual(42, added);
+        }
+
+        [TestMethod]
+        public void OnItemRemovedIsInvokedWhenItemIsOverwritten()
+        {
+                var arr = new CircularMultiResolutionArray<int>(1, 2, 2);
+                int? removed = null;
+                arr.OnItemRemoved += i => removed = i;
+                arr.PushFront(1);
+                arr.PushFront(2);
+                arr.PushFront(3); // overwrites 1
+                Assert.AreEqual(1, removed);
+        }
+
 }
