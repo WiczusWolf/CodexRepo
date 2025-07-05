@@ -50,6 +50,16 @@ namespace MyConsoleApp
             return T.CreateChecked(result);
         }
 
+        private int PowInt(int exponent)
+        {
+            int result = 1;
+            for (int i = 0; i < exponent; i++)
+            {
+                result *= _increase;
+            }
+            return result;
+        }
+
         private void OnValueAdded(int level, T value)
         {
             int start = _src.GetStartIndex(level);
@@ -114,6 +124,22 @@ namespace MyConsoleApp
                 T fraction = offset == 0 ? T.Zero : (T.CreateChecked(offset) / Pow(partition));
 
                 return runCurrent - diff * fraction - _correction;
+            }
+        }
+
+        public T this[CircularMultiResolutionArray<T>.IndexInfo index]
+        {
+            get
+            {
+                if (index.Partition < 0 || index.Partition >= _partitions)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                if (index.PartitionIndex < 0 || index.PartitionIndex >= _size)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                if (index.Offset < 0 || index.Offset >= PowInt(index.Partition))
+                    throw new ArgumentOutOfRangeException(nameof(index));
+
+                int naive = index.PartitionIndex * PowInt(index.Partition) + index.Offset;
+                return this[naive];
             }
         }
     }
