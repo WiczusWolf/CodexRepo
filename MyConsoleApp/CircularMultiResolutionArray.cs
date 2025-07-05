@@ -18,7 +18,7 @@ namespace MyConsoleApp
         public readonly EventHandlerSync<T>[] OnValueAdded;
         public readonly EventHandlerSync<T>[] OnValueRemoved;
 
-        public int MaxValue => _maxCount;
+        public int MaxCount => _maxCount;
         public int Count => _count;
         public int Partitions => _partitions;
         public int Size => _size;

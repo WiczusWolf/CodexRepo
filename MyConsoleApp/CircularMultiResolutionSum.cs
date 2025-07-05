@@ -8,12 +8,17 @@ namespace MyConsoleApp
         private readonly int _partitions;
         private readonly int _size;
         private readonly int _increase;
+        private readonly int _maxCount;
 
         private readonly T[][] _runningSums;
         private readonly int?[] _pendingIndices;
 
         private T _runningTotal;
         private T _correction;
+        private int _count;
+
+        public int MaxCount => _maxCount;
+        public int Count => _count;
 
         public CircularMultiResolutionSum(CircularMultiResolutionArray<T> src)
         {
@@ -21,6 +26,7 @@ namespace MyConsoleApp
             _partitions = src.Partitions;
             _size = src.Size;
             _increase = src.Increase;
+            _maxCount = _src.MaxCount;
 
             _runningSums = new T[_partitions][];
             for (int i = 0; i < _partitions; i++)
@@ -82,6 +88,7 @@ namespace MyConsoleApp
             {
                 _pendingIndices[level] = start;
             }
+            _count = (_count + 1) % _maxCount;
         }
 
         private void OnValueRemoved(int level, T value)
