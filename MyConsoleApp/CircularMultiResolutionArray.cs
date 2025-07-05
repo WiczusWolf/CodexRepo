@@ -41,14 +41,13 @@ namespace MyConsoleApp
                 throw new ArgumentOutOfRangeException(nameof(naiveIndex));
 
 
-            int idx = naiveIndex - 1;
             for (int partitionIndex = 0; partitionIndex < _partitions; partitionIndex++)
             {
                 int factor = Pow(partitionIndex);
-                int itemIndex = idx / factor;
+                int itemIndex = naiveIndex / factor;
                 if (itemIndex < _size)
                 {
-                    int offset = idx % factor;
+                    int offset = naiveIndex % factor;
                     return new IndexInfo(partitionIndex, itemIndex, offset);
                 }
             }
@@ -70,8 +69,8 @@ namespace MyConsoleApp
             _sums = new T[partitions];
             _counts = new int[partitions];
             _filledCounts = new int[partitions];
-            _maxCount = size;
             for (int i = 1; i < partitions; i++) size *= increase;
+            _maxCount = size;
             OnValueAdded = new EventHandlerSync<T>[partitions];
             OnValueRemoved = new EventHandlerSync<T>[partitions];
 
