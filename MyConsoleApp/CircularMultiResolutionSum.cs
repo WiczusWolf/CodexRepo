@@ -109,8 +109,8 @@ namespace MyConsoleApp
 
                 var info = _src.GetIndex(index + 1); // array uses 1-based naive index
 
-                int partition = info.Partition;
-                int partIndex = info.PartitionIndex;
+                int partition = info.PartitionIndex;
+                int partIndex = info.ItemIndex;
                 int offset = info.Offset;
 
                 int start = _src.GetStartIndex(partition);
@@ -120,8 +120,8 @@ namespace MyConsoleApp
                 if (index + 1 < _partitions * _size)
                 {
                     var nextInfo = _src.GetIndex(index + 2);
-                    int nextStart = _src.GetStartIndex(nextInfo.Partition);
-                    nextRun = _runningSums[nextInfo.Partition][(nextStart + nextInfo.PartitionIndex) % _size];
+                    int nextStart = _src.GetStartIndex(nextInfo.PartitionIndex);
+                    nextRun = _runningSums[nextInfo.PartitionIndex][(nextStart + nextInfo.ItemIndex) % _size];
                 }
                 else
                 {
@@ -139,14 +139,14 @@ namespace MyConsoleApp
         {
             get
             {
-                if (index.Partition < 0 || index.Partition >= _partitions)
+                if (index.PartitionIndex < 0 || index.PartitionIndex >= _partitions)
                     throw new ArgumentOutOfRangeException(nameof(index));
-                if (index.PartitionIndex < 0 || index.PartitionIndex >= _size)
+                if (index.ItemIndex < 0 || index.ItemIndex >= _size)
                     throw new ArgumentOutOfRangeException(nameof(index));
-                if (index.Offset < 0 || index.Offset >= PowInt(index.Partition))
+                if (index.Offset < 0 || index.Offset >= PowInt(index.PartitionIndex))
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                int naive = index.PartitionIndex * PowInt(index.Partition) + index.Offset;
+                int naive = index.ItemIndex * PowInt(index.PartitionIndex) + index.Offset;
                 return this[naive];
             }
         }

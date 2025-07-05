@@ -6,15 +6,15 @@ namespace MyConsoleApp
     {
         public readonly struct IndexInfo
         {
-            public IndexInfo(int partition, int partitionIndex, int offset)
+            public IndexInfo(int partitionIndex, int itemIndex, int offset)
             {
-                Partition = partition;
                 PartitionIndex = partitionIndex;
+                ItemIndex = itemIndex;
                 Offset = offset;
             }
 
-            public int Partition { get; }
             public int PartitionIndex { get; }
+            public int ItemIndex { get; }
             public int Offset { get; }
         }
     }

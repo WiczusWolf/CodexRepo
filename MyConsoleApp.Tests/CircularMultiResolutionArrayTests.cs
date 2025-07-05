@@ -123,41 +123,32 @@ public class CircularMultiResolutionArrayTests
             arr.PushFront(i);
         }
 
-        Assert.AreEqual(10f, arr[1]);
-        Assert.AreEqual(9f, arr[2]);
-        Assert.AreEqual(8f, arr[3]);
-        Assert.AreEqual(7.5f, arr[4]);
-        Assert.AreEqual(5.5f, arr[5]);
+        Assert.AreEqual(10f, arr[0]);
+        Assert.AreEqual(9f, arr[1]);
+        Assert.AreEqual(8f, arr[2]);
+        Assert.AreEqual(7.5f, arr[3]);
+        Assert.AreEqual(5.5f, arr[4]);
+
+
+        var info0 = arr.GetIndex(0);
+        Assert.AreEqual(0, info0.PartitionIndex);
+        Assert.AreEqual(0, info0.ItemIndex);
+        Assert.AreEqual(0, info0.Offset);
 
         var info3 = arr.GetIndex(3);
-        Assert.AreEqual(0, info3.Partition);
-        Assert.AreEqual(2, info3.PartitionIndex);
+        Assert.AreEqual(1, info3.PartitionIndex);
+        Assert.AreEqual(0, info3.ItemIndex);
         Assert.AreEqual(0, info3.Offset);
 
         var info4 = arr.GetIndex(4);
-        Assert.AreEqual(1, info4.Partition);
         Assert.AreEqual(1, info4.PartitionIndex);
-        Assert.AreEqual(1, info4.Offset);
+        Assert.AreEqual(1, info4.ItemIndex);
+        Assert.AreEqual(0, info4.Offset);
 
         var info5 = arr.GetIndex(5);
-        Assert.AreEqual(1, info5.Partition);
-        Assert.AreEqual(2, info5.PartitionIndex);
-        Assert.AreEqual(0, info5.Offset);
+        Assert.AreEqual(1, info5.PartitionIndex);
+        Assert.AreEqual(1, info5.ItemIndex);
+        Assert.AreEqual(1, info5.Offset);
     }
 
-    [TestMethod]
-    public void IndexInfoIndexerReturnsCorrectValue()
-    {
-        var arr = new CircularMultiResolutionArray<float>(2, 3, 2);
-        for (int i = 1; i <= 6; i++)
-        {
-            arr.PushFront(i);
-        }
-
-        for (int i = 1; i <= 6; i++)
-        {
-            var info = arr.GetIndex(i);
-            Assert.AreEqual(arr[i], arr[info]);
-        }
-    }
 }

@@ -37,18 +37,19 @@ namespace MyConsoleApp
 
         public IndexInfo GetIndex(int naiveIndex)
         {
-            if (naiveIndex < 0)
+            if (naiveIndex < 0 || naiveIndex >= _maxCount)
                 throw new ArgumentOutOfRangeException(nameof(naiveIndex));
 
+
             int idx = naiveIndex - 1;
-            for (int p = 0; p < _partitions; p++)
+            for (int partitionIndex = 0; partitionIndex < _partitions; partitionIndex++)
             {
-                int factor = Pow(p);
-                int partitionIndex = idx / factor;
-                if (partitionIndex < _size)
+                int factor = Pow(partitionIndex);
+                int itemIndex = idx / factor;
+                if (itemIndex < _size)
                 {
                     int offset = idx % factor;
-                    return new IndexInfo(p, partitionIndex, offset);
+                    return new IndexInfo(partitionIndex, itemIndex, offset);
                 }
             }
 
@@ -157,13 +158,13 @@ namespace MyConsoleApp
         {
             get
             {
-                if (index.Partition < 0 || index.Partition >= _partitions)
+                if (index.PartitionIndex < 0 || index.PartitionIndex >= _partitions)
                     throw new ArgumentOutOfRangeException(nameof(index));
-                if (index.PartitionIndex < 0 || index.PartitionIndex >= _size)
+                if (index.ItemIndex < 0 || index.ItemIndex >= _size)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                int realIndex = (_starts[index.Partition] + index.PartitionIndex) % _size;
-                return _arrays[index.Partition][realIndex];
+                int realIndex = (_starts[index.PartitionIndex] + index.ItemIndex) % _size;
+                return _arrays[index.PartitionIndex][realIndex];
             }
         }
 
