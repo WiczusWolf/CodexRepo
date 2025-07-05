@@ -1,5 +1,3 @@
-using System;
-
 namespace MyConsoleApp
 {
     internal class Program
