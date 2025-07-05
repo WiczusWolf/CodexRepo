@@ -1,5 +1,6 @@
 using Common.Delegates;
 using System.Numerics;
+using System.Text;
 
 namespace MyConsoleApp
 {
@@ -50,7 +51,7 @@ namespace MyConsoleApp
 
         public IndexInfo GetIndex(int naiveIndex)
         {
-            if (naiveIndex <= 0)
+            if (naiveIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(naiveIndex));
 
             int idx = naiveIndex - 1;
@@ -185,6 +186,23 @@ namespace MyConsoleApp
             if (partition < 0 || partition >= _partitions)
                 throw new ArgumentOutOfRangeException(nameof(partition));
             return _starts[partition];
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("[");
+            for (int i = 0; i < _count; i++)
+            {
+                sb.Append(this[i]);
+                sb.Append(", ");
+            }
+            if (sb.Length > 2)
+            {
+                sb.Length -= 2;
+                sb.Append("]");
+            }
+            return sb.ToString();
         }
     }
 }

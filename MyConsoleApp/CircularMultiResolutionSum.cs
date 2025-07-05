@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text;
 
 namespace MyConsoleApp
 {
@@ -148,6 +149,23 @@ namespace MyConsoleApp
                 int naive = index.PartitionIndex * PowInt(index.Partition) + index.Offset;
                 return this[naive];
             }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("[");
+            for (int i = 0; i < _count; i++)
+            {
+                sb.Append(this[i]);
+                sb.Append(", ");
+            }
+            if (sb.Length > 2)
+            {
+                sb.Length -= 2;
+                sb.Append("]");
+            }
+            return sb.ToString();
         }
     }
 }
