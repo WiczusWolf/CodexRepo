@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MyConsoleApp
 {
-    public class CircularMultiResolutionArray<T> where T : INumber<T>
+    public partial class CircularMultiResolutionArray<T> where T : INumber<T>
     {
         private readonly int _partitions;
         private readonly int _size;
@@ -24,20 +24,6 @@ namespace MyConsoleApp
         public int Partitions => _partitions;
         public int Size => _size;
         public int Increase => _increase;
-
-        public readonly struct IndexInfo
-        {
-            public IndexInfo(int partition, int partitionIndex, int offset)
-            {
-                Partition = partition;
-                PartitionIndex = partitionIndex;
-                Offset = offset;
-            }
-
-            public int Partition { get; }
-            public int PartitionIndex { get; }
-            public int Offset { get; }
-        }
 
         private int Pow(int exponent)
         {
