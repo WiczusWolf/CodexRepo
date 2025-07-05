@@ -13,10 +13,13 @@ namespace MyConsoleApp
         private readonly T[] _sums;
         private readonly int[] _counts;
         private readonly int[] _filledCounts;
-
+        private readonly int _maxCount;
+        private int _count;
         public readonly EventHandlerSync<T>[] OnValueAdded;
         public readonly EventHandlerSync<T>[] OnValueRemoved;
 
+        public int MaxValue => _maxCount;
+        public int Count => _count;
         public int Partitions => _partitions;
         public int Size => _size;
         public int Increase => _increase;
@@ -79,6 +82,8 @@ namespace MyConsoleApp
             _sums = new T[partitions];
             _counts = new int[partitions];
             _filledCounts = new int[partitions];
+            _maxCount = size;
+            for (int i = 1; i < partitions; i++) size *= increase;
             OnValueAdded = new EventHandlerSync<T>[partitions];
             OnValueRemoved = new EventHandlerSync<T>[partitions];
 
@@ -97,6 +102,7 @@ namespace MyConsoleApp
         public void PushFront(T item)
         {
             PushToLevel(0, item);
+            _count = (_count + 1) % _maxCount;
         }
 
         private void PushToLevel(int level, T item)

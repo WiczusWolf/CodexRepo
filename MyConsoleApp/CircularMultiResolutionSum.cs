@@ -63,7 +63,7 @@ namespace MyConsoleApp
                 {
                     if (_pendingIndices[l].HasValue)
                     {
-                        _runningSums[l][_pendingIndices[l].Value] = _runningTotal;
+                        _runningSums[l][_pendingIndices[l]!.Value] = _runningTotal;
                         _pendingIndices[l] = null;
                     }
                 }
