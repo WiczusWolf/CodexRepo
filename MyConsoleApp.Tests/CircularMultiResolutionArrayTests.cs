@@ -144,4 +144,20 @@ public class CircularMultiResolutionArrayTests
         Assert.AreEqual(2, info5.PartitionIndex);
         Assert.AreEqual(0, info5.Offset);
     }
+
+    [TestMethod]
+    public void IndexInfoIndexerReturnsCorrectValue()
+    {
+        var arr = new CircularMultiResolutionArray<float>(2, 3, 2);
+        for (int i = 1; i <= 6; i++)
+        {
+            arr.PushFront(i);
+        }
+
+        for (int i = 1; i <= 6; i++)
+        {
+            var info = arr.GetIndex(i);
+            Assert.AreEqual(arr[i], arr[info]);
+        }
+    }
 }

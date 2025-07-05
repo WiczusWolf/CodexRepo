@@ -119,4 +119,22 @@ public class CircularMultiResolutionSumTests
         //The resolution decreased and we use a fraction this means some information was lost and this small error is acceptable. 
         Assert.AreEqual(5.5f, sum[5]);// partition 1 index 2
     }
+
+    [TestMethod]
+    public void IndexInfoIndexerReturnsCorrectValue()
+    {
+        var arr = new CircularMultiResolutionArray<float>(1, 4, 2);
+        var sum = new CircularMultiResolutionSum<float>(arr);
+
+        arr.PushFront(1f);
+        arr.PushFront(2f);
+        arr.PushFront(3f);
+        arr.PushFront(4f);
+
+        for (int i = 0; i < 4; i++)
+        {
+            var info = arr.GetIndex(i + 1);
+            Assert.AreEqual(sum[i], sum[info]);
+        }
+    }
 }
