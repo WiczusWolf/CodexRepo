@@ -104,7 +104,7 @@ namespace MyConsoleApp
         {
             get
             {
-                if (index < 0 || index >= _partitions * _size)
+                if (index < 0 || index >= _maxCount)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
                 var info = _src.GetIndex(index);

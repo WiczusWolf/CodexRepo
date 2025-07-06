@@ -49,6 +49,7 @@ namespace MyConsoleApp
                 {
                     int offset = idx % factor;
                     return new IndexInfo(partition, itemIndex, offset);
+
                 }
             }
 
@@ -69,8 +70,8 @@ namespace MyConsoleApp
             _sums = new T[partitions];
             _counts = new int[partitions];
             _filledCounts = new int[partitions];
-            _maxCount = size;
             for (int i = 1; i < partitions; i++) size *= increase;
+            _maxCount = size;
             OnValueAdded = new EventHandlerSync<T>[partitions];
             OnValueRemoved = new EventHandlerSync<T>[partitions];
 
