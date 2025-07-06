@@ -107,7 +107,7 @@ namespace MyConsoleApp
                 if (index < 0 || index >= _maxCount)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                var info = _src.GetIndex(index + 1); // array uses 1-based naive index
+                var info = _src.GetIndex(index);
 
                 int partition = info.PartitionIndex;
                 int partIndex = info.ItemIndex;
@@ -119,7 +119,7 @@ namespace MyConsoleApp
                 T nextRun;
                 if (index + 1 < _partitions * _size)
                 {
-                    var nextInfo = _src.GetIndex(index + 2);
+                    var nextInfo = _src.GetIndex(index + 1);
                     int nextStart = _src.GetStartIndex(nextInfo.PartitionIndex);
                     nextRun = _runningSums[nextInfo.PartitionIndex][(nextStart + nextInfo.ItemIndex) % _size];
                 }

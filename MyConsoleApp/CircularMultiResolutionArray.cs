@@ -37,18 +37,19 @@ namespace MyConsoleApp
 
         public IndexInfo GetIndex(int naiveIndex)
         {
-            if (naiveIndex < 0 || naiveIndex >= _maxCount)
+            if (naiveIndex < 0 || naiveIndex >= _partitions * _size)
                 throw new ArgumentOutOfRangeException(nameof(naiveIndex));
 
-
-            for (int partitionIndex = 0; partitionIndex < _partitions; partitionIndex++)
+            int idx = naiveIndex;
+            for (int partition = 0; partition < _partitions; partition++)
             {
-                int factor = Pow(partitionIndex);
-                int itemIndex = naiveIndex / factor;
+                int factor = Pow(partition);
+                int itemIndex = idx / factor;
                 if (itemIndex < _size)
                 {
-                    int offset = naiveIndex % factor;
-                    return new IndexInfo(partitionIndex, itemIndex, offset);
+                    int offset = idx % factor;
+                    return new IndexInfo(partition, itemIndex, offset);
+
                 }
             }
 

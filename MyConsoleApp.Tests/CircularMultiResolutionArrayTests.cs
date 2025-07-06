@@ -137,17 +137,17 @@ public class CircularMultiResolutionArrayTests
 
         var info3 = arr.GetIndex(3);
         Assert.AreEqual(1, info3.PartitionIndex);
-        Assert.AreEqual(0, info3.ItemIndex);
-        Assert.AreEqual(0, info3.Offset);
+        Assert.AreEqual(1, info3.ItemIndex);
+        Assert.AreEqual(1, info3.Offset);
 
         var info4 = arr.GetIndex(4);
         Assert.AreEqual(1, info4.PartitionIndex);
-        Assert.AreEqual(1, info4.ItemIndex);
+        Assert.AreEqual(2, info4.ItemIndex);
         Assert.AreEqual(0, info4.Offset);
 
         var info5 = arr.GetIndex(5);
         Assert.AreEqual(1, info5.PartitionIndex);
-        Assert.AreEqual(1, info5.ItemIndex);
+        Assert.AreEqual(2, info5.ItemIndex);
         Assert.AreEqual(1, info5.Offset);
     }
 
