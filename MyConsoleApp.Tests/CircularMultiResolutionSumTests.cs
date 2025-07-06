@@ -133,7 +133,7 @@ public class CircularMultiResolutionSumTests
 
         for (int i = 0; i < 4; i++)
         {
-            var info = arr.GetIndex(i + 1);
+            var info = arr.GetIndex(i);
             Assert.AreEqual(sum[i], sum[info]);
         }
     }
