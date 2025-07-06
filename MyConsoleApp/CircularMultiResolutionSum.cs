@@ -89,7 +89,7 @@ namespace MyConsoleApp
             {
                 _pendingIndices[level] = start;
             }
-            _count = (_count + 1) % _maxCount;
+            _count = Math.Min((_count + 1), _maxCount);
         }
 
         private void OnValueRemoved(int level, T value)

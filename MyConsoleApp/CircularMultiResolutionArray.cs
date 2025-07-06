@@ -37,7 +37,7 @@ namespace MyConsoleApp
 
         public IndexInfo GetIndex(int naiveIndex)
         {
-            if (naiveIndex < 0 || naiveIndex >= _partitions * _size)
+            if (naiveIndex < 0 || naiveIndex >= _maxCount)
                 throw new ArgumentOutOfRangeException(nameof(naiveIndex));
 
             int idx = naiveIndex;
@@ -90,7 +90,7 @@ namespace MyConsoleApp
         public void PushFront(T item)
         {
             PushToLevel(0, item);
-            _count = (_count + 1) % _maxCount;
+            _count = Math.Min((_count + 1), _maxCount);
         }
 
         private void PushToLevel(int level, T item)
