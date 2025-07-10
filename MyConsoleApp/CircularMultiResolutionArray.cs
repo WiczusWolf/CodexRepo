@@ -1,10 +1,9 @@
-using Common.Delegates;
 using System.Numerics;
 using System.Text;
 
 namespace MyConsoleApp
 {
-    public partial class CircularMultiResolutionArray<T> where T : INumber<T>
+    public class CircularMultiResolutionArray<T> where T : INumber<T>
     {
         private readonly int _partitions;
         private readonly int _size;
@@ -21,9 +20,9 @@ namespace MyConsoleApp
 
         public int MaxCount => _maxCount;
         public int Count => _count;
-        public int Partitions => _partitions;
-        public int Size => _size;
-        public int Increase => _increase;
+        public int PartitionCount => _partitions;
+        public int PartitionSize => _size;
+        public int MagnitudeIncrease => _increase;
 
         private int Pow(int exponent)
         {
@@ -48,7 +47,7 @@ namespace MyConsoleApp
                 if (itemIndex < _size)
                 {
                     int offset = idx % factor;
-                    return new IndexInfo(partition, itemIndex, offset);
+                    return new IndexInfo(partition, itemIndex, offset, 0, 0);
 
                 }
             }
@@ -70,8 +69,8 @@ namespace MyConsoleApp
             _sums = new T[partitions];
             _counts = new int[partitions];
             _filledCounts = new int[partitions];
-            for (int i = 1; i < partitions; i++) size *= increase;
             _maxCount = size;
+            for (int i = 1; i < partitions; i++) _maxCount *= increase;
             OnValueAdded = new EventHandlerSync<T>[partitions];
             OnValueRemoved = new EventHandlerSync<T>[partitions];
 
@@ -190,6 +189,11 @@ namespace MyConsoleApp
                 sb.Append("]");
             }
             return sb.ToString();
+        }
+
+        public T First()
+        {
+            return this[0, 0];
         }
     }
 }

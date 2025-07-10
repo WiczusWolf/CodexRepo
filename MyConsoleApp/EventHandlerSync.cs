@@ -1,4 +1,4 @@
-﻿namespace Common.Delegates
+﻿namespace MyConsoleApp
 {
     public class EventHandlerSync<TArg, TRes>
     {
