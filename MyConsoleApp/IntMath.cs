@@ -31,7 +31,7 @@ namespace MyConsoleApp
         public static int Pow(int item, int pow)
         {
             int magnitude = 1;
-            for (int i = 1; i < pow; i++)
+            for (int i = 0; i < pow; i++)
             {
                 magnitude *= item;
             }
