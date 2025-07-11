@@ -1,199 +1,204 @@
-using System.Numerics;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
+using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
     public class CircularMultiResolutionArray<T> where T : INumber<T>
     {
-        private readonly int _partitions;
-        private readonly int _size;
-        private readonly int _increase;
-        private readonly T[][] _arrays;
-        private readonly int[] _starts;
-        private readonly T[] _sums;
-        private readonly int[] _counts;
-        private readonly int[] _filledCounts;
-        private readonly int _maxCount;
-        private int _count;
-        public readonly EventHandlerSync<T>[] OnValueAdded;
-        public readonly EventHandlerSync<T>[] OnValueRemoved;
-
-        public int MaxCount => _maxCount;
         public int Count => _count;
-        public int PartitionCount => _partitions;
-        public int PartitionSize => _size;
-        public int MagnitudeIncrease => _increase;
+        public int MaxSize => _maxSize;
+        public int PartitionSize => _partitionSize;
+        public int MagnitudeIncrease => _magnitudeIncrease;
+        public int PartitionCount => _partitionCount;
+        public IReadOnlyCollection<T>[] Partitions => _partitions.Select(p => p.AsReadOnly()).ToArray();
 
-        private int Pow(int exponent)
+        public EventHandlerSync<T> OnValueAdded = new();
+
+        private T[][] _partitions;
+        private T[] _removed;
+        private int[] _cursors;
+        private int[] _modulos;
+        private int[] _offsets;
+        private int _count;
+        private int _maxSize;
+        private int _partitionCount;
+        private int _partitionSize;
+        private int _magnitudeIncrease;
+        private int _partitionLog;
+        private int _countModLast;
+        private int _partitionSizeMask;
+        private T _runningSumMaxBeforeReset;
+        public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedItemValue = 5000)
         {
-            int result = 1;
-            for (int i = 0; i < exponent; i++)
+            if (!partitionSize.IsPowerOfTwo() || partitionSize <= 0)
+                throw new ArgumentException($"Partition Size must be a power of 2, got {_partitionSize}.");
+            if (!magnitudeIncrease.IsPowerOfTwo() || magnitudeIncrease <= 1)
+                throw new ArgumentException($"Magnitude step must be a power of 2, got {_magnitudeIncrease}.");
+            if (magnitudeIncrease >= partitionSize)
+                throw new ArgumentException($"Magnitude step {_magnitudeIncrease} must be greater than partition size {_partitionSize}.");
+
+            _partitionCount = partitionCount;
+            _partitionSize = partitionSize;
+            _magnitudeIncrease = magnitudeIncrease;
+
+            _partitionLog = BitOperations.Log2((uint)magnitudeIncrease);
+            _partitionSizeMask = _partitionSize - 1;
+            _maxSize = _partitionSize * Pow(magnitudeIncrease, partitionCount - 1);
+            _partitions = new T[_partitionCount][];
+            _cursors = new int[_partitionCount];
+            _removed = new T[_partitionCount];
+            _offsets = new int[_partitionCount];
+            _modulos = new int[_partitionCount];
+            _modulos[0] = 1;
+            _runningSumMaxBeforeReset = T.CreateChecked(_maxSize * anticipatedItemValue);
+            for (int i = 1; i < _partitionCount; i++)
             {
-                result *= _increase;
+                _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
             }
-            return result;
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                _partitions[i] = new T[_partitionSize];
+            }
         }
 
-        public IndexInfo GetIndex(int naiveIndex)
+        public T First() => GetWithNonCircularItemIndex(0, 0);
+
+        public void PushFront(T value)
         {
-            if (naiveIndex < 0 || naiveIndex >= _maxCount)
-                throw new ArgumentOutOfRangeException(nameof(naiveIndex));
+            _partitions[0][_cursors[0]] = value;
+            _cursors[0] = (_cursors[0] + 1) % _partitionSize;
+            _countModLast = (_countModLast + 1) % _modulos[_partitionCount - 1];
 
-            int idx = naiveIndex;
-            for (int partition = 0; partition < _partitions; partition++)
+            for (int i = 1; i < _partitionCount; i++)
             {
-                int factor = Pow(partition);
-                int itemIndex = idx / factor;
-                if (itemIndex < _size)
+                if (_countModLast % _modulos[i] == 0)
                 {
-                    int offset = idx % factor;
-                    return new IndexInfo(partition, itemIndex, offset, 0, 0);
-
+                    _removed[i] = _partitions[i][_cursors[i]];
+                    _partitions[i][_cursors[i]] = AverageFromPartition(i - 1);
+                    _cursors[i] = (_cursors[i] + 1) % _partitionSize;
+                }
+                else
+                {
+                    break;
                 }
             }
 
-            throw new ArgumentOutOfRangeException(nameof(naiveIndex));
+            _count = Math.Min(_count + 1, _maxSize);
+
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                _offsets[i] = (_modulos[i] + _countModLast) % _modulos[i];
+            }
+            OnValueAdded.Invoke(value);
         }
 
-        public CircularMultiResolutionArray(int partitions, int size, int increase)
-        {
-            if (partitions <= 0) throw new ArgumentOutOfRangeException(nameof(partitions));
-            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
-            if (increase <= 0) throw new ArgumentOutOfRangeException(nameof(increase));
-
-            _partitions = partitions;
-            _size = size;
-            _increase = increase;
-            _arrays = new T[partitions][];
-            _starts = new int[partitions];
-            _sums = new T[partitions];
-            _counts = new int[partitions];
-            _filledCounts = new int[partitions];
-            _maxCount = size;
-            for (int i = 1; i < partitions; i++) _maxCount *= increase;
-            OnValueAdded = new EventHandlerSync<T>[partitions];
-            OnValueRemoved = new EventHandlerSync<T>[partitions];
-
-            for (int i = 0; i < partitions; i++)
-            {
-                _arrays[i] = new T[size];
-                _starts[i] = 0;
-                _sums[i] = T.Zero;
-                _counts[i] = 0;
-                _filledCounts[i] = 0;
-                OnValueAdded[i] = new EventHandlerSync<T>();
-                OnValueRemoved[i] = new EventHandlerSync<T>();
-            }
-        }
-
-        public void PushFront(T item)
-        {
-            PushToLevel(0, item);
-            _count = Math.Min((_count + 1), _maxCount);
-        }
-
-        private void PushToLevel(int level, T item)
-        {
-            if (level >= _partitions)
-                return;
-
-            int start = (_starts[level] - 1 + _size) % _size;
-            T removedValue = _arrays[level][start];
-            bool removed = false;
-
-            if (_filledCounts[level] == _size)
-            {
-                removed = true;
-            }
-            else
-            {
-                _filledCounts[level]++;
-            }
-
-            _starts[level] = start;
-            _arrays[level][start] = item;
-
-            _sums[level] += item;
-            _counts[level]++;
-
-            if (_counts[level] >= _increase)
-            {
-                T avg = _sums[level] / T.CreateChecked(_increase);
-                _sums[level] = T.Zero;
-                _counts[level] = 0;
-                PushToLevel(level + 1, avg);
-            }
-
-            OnValueAdded[level].Invoke(item);
-            if (removed)
-            {
-                OnValueRemoved[level].Invoke(removedValue);
-            }
-        }
-
-        public T this[int partition, int index]
+        public T this[CMRSIndex index]
         {
             get
             {
-                if (partition < 0 || partition >= _partitions)
-                    throw new ArgumentOutOfRangeException(nameof(partition));
-                if (index < 0 || index >= _size)
-                    throw new ArgumentOutOfRangeException(nameof(index));
-                int realIndex = (_starts[partition] + index) % _size;
-                return _arrays[partition][realIndex];
+                int partitionIndex = index.PartitionIndex;
+                int itemIndex = index.ItemIndex;
+                int itemOffset = index.Offset;
+                T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
+                T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1, GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)), _removed[partitionIndex]);
+                T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
+
+                int maxOffset = _modulos[partitionIndex];
+                int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - _offsets[partitionIndex] * 2;
+                return Interpolate(current, previous, next, selectedOffset, maxOffset * 2);
             }
         }
 
-        public T this[int naiveIndex]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static int QuadraticOffset(int index, int magnitude)
         {
-            get
+            return index < (magnitude >> 1)
+                 ? -(magnitude - (index << 1) - 1)
+                 : ((index << 1) - magnitude + 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T SwitchOnGreaterOrEqualZero(int comparator, T onLower, T onGreater)
+        {
+            int isGE = ~(comparator >> 31) & 1;
+            T flag = T.CreateTruncating(isGE);
+            return onLower + (onGreater - onLower) * flag;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T Interpolate(T current, T previous, T next, int offset, int maxOffset)
+        {
+            int absOff = FastAbs(offset);
+            var invMax = T.One / T.CreateTruncating(maxOffset);
+
+            T frac = T.CreateTruncating(absOff) * invMax;
+
+            T currFrac = T.One - frac;
+            return current * currFrac + SwitchOnGreaterOrEqualZero(offset, frac * previous, frac * next);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T GetWithNonCircularItemIndex(int partitionIndex, int nonCircularIndex)
+        {
+#if SAFE
+            int realItemIndex = (_cursors[partitionIndex] - nonCircularIndex - 1) & _partitionSizeMask;
+            return _partitions[partitionIndex][realItemIndex];
+#else
+            unsafe
             {
-                var info = GetIndex(naiveIndex);
-                return this[info];
+                int realItemIndex = _cursors[partitionIndex] - nonCircularIndex - 1 & _partitionSizeMask;
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+                fixed (T* arr = _partitions[partitionIndex])
+                {
+                    return arr[realItemIndex];
+                }
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             }
+#endif
         }
 
-        public T this[IndexInfo index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T AverageFromPartition(int partitionIndex)
         {
-            get
+            int realItemIndex = (_cursors[partitionIndex]) & _partitionSizeMask;
+            T sum = T.Zero;
+            for (int i = 0; i < _magnitudeIncrease; i++)
             {
-                if (index.PartitionIndex < 0 || index.PartitionIndex >= _partitions)
-                    throw new ArgumentOutOfRangeException(nameof(index));
-                if (index.ItemIndex < 0 || index.ItemIndex >= _size)
-                    throw new ArgumentOutOfRangeException(nameof(index));
-
-                int realIndex = (_starts[index.PartitionIndex] + index.ItemIndex) % _size;
-                return _arrays[index.PartitionIndex][realIndex];
+                realItemIndex = (realItemIndex - 1) & _partitionSizeMask;
+                sum += _partitions[partitionIndex][realItemIndex];
             }
-        }
 
-        public int GetStartIndex(int partition)
+            return sum / T.CreateTruncating(_magnitudeIncrease);
+        }
+        public CMRSIndex GetIndex(uint index)
         {
-            if (partition < 0 || partition >= _partitions)
-                throw new ArgumentOutOfRangeException(nameof(partition));
-            return _starts[partition];
+            if (index > _maxSize)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), $"Index must be in range 0 to {_maxSize}, got {index}.");
+            }
+            uint partitionIndex = index / (uint)_partitionSize;
+            if (partitionIndex > 0)
+            {
+                partitionIndex = (uint)BitOperations.Log2(partitionIndex) / (uint)_partitionLog + 1;
+            }
+            int itemIndex = (int)index / _modulos[partitionIndex];
+            int offset = (int)index % _modulos[partitionIndex];
+            return new CMRSIndex((int)partitionIndex, itemIndex, offset);
         }
 
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[");
-            for (int i = 0; i < _count; i++)
+            for (uint i = 0; i < _count; i++)
             {
-                sb.Append(this[i]);
+                sb.Append(this[GetIndex(i)]);
                 sb.Append(", ");
             }
-            if (sb.Length > 2)
-            {
-                sb.Length -= 2;
-                sb.Append("]");
-            }
+            if (sb.Length > 2) sb.Length -= 2;
+            sb.Append("]");
             return sb.ToString();
-        }
-
-        public T First()
-        {
-            return this[0, 0];
         }
     }
 }

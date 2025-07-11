@@ -47,7 +47,7 @@ namespace MyConsoleApp
 
             _partitionLog = BitOperations.Log2((uint)magnitudeIncrease);
             _partitionSizeMask = _partitionSize - 1;
-            _maxSize = (_partitionSize - 1) * Pow(magnitudeIncrease, partitionCount - 1) - 1;
+            _maxSize = _partitionSize * Pow(magnitudeIncrease, partitionCount - 1);
             _partitions = new T[_partitionCount][];
             _cursors = new int[_partitionCount];
             _removed = new T[_partitionCount];
@@ -64,7 +64,7 @@ namespace MyConsoleApp
                 _partitions[i] = new T[_partitionSize];
             }
 
-            src.OnValueAdded[0].Add(OnPushFront);
+            src.OnValueAdded.Add(OnPushFront);
         }
         public T First() => GetWithNonCircularItemIndex(0, 0);
 
