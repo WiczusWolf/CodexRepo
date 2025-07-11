@@ -145,4 +145,23 @@ public class CircularMultiResolutionSumTests
         PushSequential(arr, 7);
         Assert.AreEqual(7, sum.Count);
     }
+
+    [TestMethod]
+    public void ResetMaintainsAccuracyWhenThresholdExceeded()
+    {
+        var arr = new CircularMultiResolutionArray<float>(3, 4, 2);
+        // threshold of 5000 => anticipatedMaxItemValue = 5000 / (sum.MaxSize * 2)
+        var sum = new CircularMultiResolutionSum<float>(arr, 4, 4, 2, 78.125);
+        var values = PushSequential(arr, 8, 1000, 0); // running sum exceeds 5000
+        VerifySums(arr, sum, values);
+    }
+
+    [TestMethod]
+    public void CountCappedAfterReset()
+    {
+        var arr = new CircularMultiResolutionArray<float>(3, 4, 2);
+        var sum = new CircularMultiResolutionSum<float>(arr, 4, 4, 2, 78.125);
+        PushSequential(arr, sum.MaxSize + 10, 1000, 0);
+        Assert.AreEqual(sum.MaxSize, sum.Count);
+    }
 }
