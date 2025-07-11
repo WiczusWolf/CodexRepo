@@ -17,7 +17,10 @@ namespace MyConsoleApp
         private CMRIndex _to;
         public StandardDeviation(ICMRObject<T> squaredSumSrc, ICMRObject<T> sumSrc, CMRIndex to, CMRIndex from, int itemCount)
         {
-            if (squaredSumSrc.MaxSize != sumSrc.MaxSize) throw new ArgumentException("Sum and SquaredSum sources need to originate from the same array. ");
+            if (squaredSumSrc.MaxSize != sumSrc.MaxSize)
+                throw new ArgumentException("Sum and SquaredSum sources need to originate from the same array. ");
+            if (itemCount <= 1)
+                throw new ArgumentException("Standard deviation requires at least two items.", nameof(itemCount));
 
             _squaredSumSrc = squaredSumSrc;
             _sumSrc = sumSrc;
@@ -74,7 +77,9 @@ namespace MyConsoleApp
             T sumOfSquares = _squaredSumSrc[_from] - _squaredSumSrc[_to];
             T sum = _sumSrc[_from] - _sumSrc[_to];
 
-            _value = T.Sqrt((sumOfSquares - (sum * sum) / _itemCount) / (_itemCount - T.One));
+            T variance = (sumOfSquares - (sum * sum) / _itemCount) / (_itemCount - T.One);
+            if (variance < T.Zero) variance = T.Zero;
+            _value = T.Sqrt(variance);
         }
     }
 }
