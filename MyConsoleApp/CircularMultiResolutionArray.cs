@@ -31,7 +31,7 @@ namespace MyConsoleApp
             }
 
             AdvanceCounters(0);
-            OnValueAdded.Invoke(value);
+            OnValueAdded.Invoke();
         }
 
         protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)

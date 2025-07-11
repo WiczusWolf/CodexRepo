@@ -13,7 +13,7 @@ namespace MyConsoleApp
         public int PartitionCount => _partitionCount;
         public IReadOnlyCollection<T>[] Partitions => _partitions.Select(p => p.AsReadOnly()).ToArray();
 
-        public EventHandlerSync<T> OnValueAdded = new();
+        public readonly EventHandlerSync OnValueAdded = new();
 
         protected readonly T[][] _partitions;
         protected readonly T[] _removed;
@@ -115,7 +115,7 @@ namespace MyConsoleApp
 #endif
         }
 
-        public CMRSIndex GetIndex(uint index)
+        public CMRIndex GetIndex(uint index)
         {
             if (index > _maxSize)
             {
@@ -128,7 +128,7 @@ namespace MyConsoleApp
             }
             int itemIndex = (int)index / _modulos[partitionIndex];
             int offset = (int)index % _modulos[partitionIndex];
-            return new CMRSIndex((int)partitionIndex, itemIndex, offset);
+            return new CMRIndex((int)partitionIndex, itemIndex, offset);
         }
 
         public override string ToString()
@@ -149,7 +149,7 @@ namespace MyConsoleApp
 
         protected virtual T PostProcess(T value) => value;
 
-        private protected T InterpolatedAt(CMRSIndex index)
+        private protected T InterpolatedAt(CMRIndex index)
         {
             int partitionIndex = index.PartitionIndex;
             int itemIndex = index.ItemIndex;
@@ -165,6 +165,6 @@ namespace MyConsoleApp
             return PostProcess(Interpolate(current, previous, next, offset, maxOffset));
         }
 
-        public virtual T this[CMRSIndex index] => InterpolatedAt(index);
+        public virtual T this[CMRIndex index] => InterpolatedAt(index);
     }
 }

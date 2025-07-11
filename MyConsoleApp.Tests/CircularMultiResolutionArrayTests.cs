@@ -117,7 +117,7 @@ public class CircularMultiResolutionArrayTests
     {
         var arr = new CircularMultiResolutionArray<float>(1, 4, 2);
         float last = -1f;
-        arr.OnValueAdded.Add(v => last = v);
+        arr.OnValueAdded.Add(() => last = arr.First());
         arr.PushFront(3f);
         Assert.AreEqual(3f, last, 1e-6);
     }

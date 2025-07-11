@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace MyConsoleApp
 {
-    internal class CircularMultiResolutionSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
+    public class CircularMultiResolutionSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
         private readonly CircularMultiResolutionArray<T> _src;
         private T _runningSum = T.Zero;
@@ -21,9 +21,9 @@ namespace MyConsoleApp
         }
 
 
-        private void OnPushFront(T value)
+        private void OnPushFront()
         {
-            _runningSum += value;
+            _runningSum += _src.First();
             for (int i = 0; i < _partitionCount; i++)
             {
                 if (_countModLast % _modulos[i] == 0)
@@ -44,7 +44,7 @@ namespace MyConsoleApp
             {
                 ApplyRemoved();
             }
-            OnValueAdded.Invoke(_runningSum - _removed[_partitionCount - 1]);
+            OnValueAdded.Invoke();
         }
         private void ApplyRemoved()
         {
