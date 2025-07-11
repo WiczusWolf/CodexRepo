@@ -1,4 +1,6 @@
-﻿namespace MyConsoleApp
+﻿using System.Diagnostics;
+
+namespace MyConsoleApp
 {
     public class EventHandlerSync<TArg, TRes>
     {
@@ -100,7 +102,7 @@
                 }
             }
         }
-
+        [DebuggerStepThrough]
         public void Invoke()
         {
             for (int i = 0; i < _count; i++)

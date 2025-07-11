@@ -4,7 +4,7 @@ using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
-    public abstract class CircularMultiResolutionBase<T> where T : INumber<T>
+    public abstract class CircularMultiResolutionBase<T> : ICMRObject<T> where T : INumber<T>
     {
         public int Count => _count;
         public int MaxSize => _maxSize;
@@ -13,8 +13,7 @@ namespace MyConsoleApp
         public int PartitionCount => _partitionCount;
         public IReadOnlyCollection<T>[] Partitions => _partitions.Select(p => p.AsReadOnly()).ToArray();
 
-        public readonly EventHandlerSync OnValueAdded = new();
-
+        protected readonly EventHandlerSync OnValueAdded = new();
         protected readonly T[][] _partitions;
         protected readonly T[] _removed;
         protected readonly int[] _cursors;
@@ -60,6 +59,10 @@ namespace MyConsoleApp
                 _partitions[i] = new T[_partitionSize];
             }
         }
+
+        public void SubscribeValueAdded(Action action) => OnValueAdded.Add(action);
+        public void UnsubscribeValueAdded(Action action) => OnValueAdded.Remove(action);
+
         public T First() => GetWithNonCircularItemIndex(0, 0);
 
         protected void IncrementModuloCount() => _countModLast = (_countModLast + 1) % _modulos[_partitionCount - 1];

@@ -18,7 +18,7 @@ namespace MyConsoleApp
             _startIndex = src.GetIndex(from);
             _endIndex = src.GetIndex(to);
             _itemCount = T.CreateTruncating(to - from);
-            src.OnValueAdded.Add(Recalculate);
+            src.SubscribeValueAdded(Recalculate);
         }
 
         public void Recalculate()

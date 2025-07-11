@@ -119,7 +119,7 @@ public class CircularMultiResolutionSumTests
         var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
         var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
         float lastValue = 0f;
-        sum.OnValueAdded.Add(() => lastValue = sum.First());
+        sum.SubscribeValueAdded(() => lastValue = sum.First());
         var values = PushSequential(arr, 5);
         Assert.AreEqual(sum[sum.GetIndex(0)], lastValue, 1e-3);
     }

@@ -4,7 +4,7 @@ namespace MyConsoleApp
 {
     public class CircularMultiResolutionSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
-        private readonly CircularMultiResolutionArray<T> _src;
+        private readonly ICMRObject<T> _src;
         private T _runningSum = T.Zero;
         protected T _runningSumMaxBeforeReset;
         /// <summary>
@@ -12,12 +12,12 @@ namespace MyConsoleApp
         /// </summary>
         /// <param name="src">Items added to this array will contribute to the running sum. </param>
         /// <param name="anticipatedMaxItemValue">The sum uses variables that increase indefinetely, they have to be reset sometimes. This value should be around average what is added to the array. </param>
-        public CircularMultiResolutionSum(CircularMultiResolutionArray<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
+        public CircularMultiResolutionSum(ICMRObject<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
             : base(partitionCount, partitionSize, magnitudeIncrease)
         {
             _src = src;
             _runningSumMaxBeforeReset = T.CreateTruncating(anticipatedMaxItemValue * _maxSize * 2);
-            src.OnValueAdded.Add(OnPushFront);
+            src.SubscribeValueAdded(OnPushFront);
         }
 
 
