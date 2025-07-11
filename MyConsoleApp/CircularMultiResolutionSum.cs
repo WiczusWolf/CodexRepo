@@ -1,5 +1,4 @@
 using System.Numerics;
-using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
@@ -7,15 +6,20 @@ namespace MyConsoleApp
     {
         private readonly CircularMultiResolutionArray<T> _src;
         private T _runningSum = T.Zero;
-
-        public CircularMultiResolutionSum(CircularMultiResolutionArray<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedItemValue = 5000)
-            : base(partitionCount, partitionSize, magnitudeIncrease, anticipatedItemValue)
+        protected T _runningSumMaxBeforeReset;
+        /// <summary>
+        /// Default Constructor
+        /// </summary>
+        /// <param name="src">Items added to this array will contribute to the running sum. </param>
+        /// <param name="anticipatedMaxItemValue">The sum uses variables that increase indefinetely, they have to be reset sometimes. This value should be around average what is added to the array. </param>
+        public CircularMultiResolutionSum(CircularMultiResolutionArray<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
+            : base(partitionCount, partitionSize, magnitudeIncrease)
         {
             _src = src;
+            _runningSumMaxBeforeReset = T.CreateTruncating(anticipatedMaxItemValue * _maxSize * 2);
             src.OnValueAdded.Add(OnPushFront);
         }
 
-        public T First() => GetWithNonCircularItemIndex(0, 0);
 
         private void OnPushFront(T value)
         {
@@ -36,9 +40,23 @@ namespace MyConsoleApp
 
             IncrementModuloCount();
             AdvanceCounters(-1);
+            if (_runningSum >= _runningSumMaxBeforeReset)
+            {
+                ApplyRemoved();
+            }
             OnValueAdded.Invoke(_runningSum - _removed[_partitionCount - 1]);
         }
-
+        private void ApplyRemoved()
+        {
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                for (int j = 0; j < _partitionSize; j++)
+                {
+                    _partitions[i][j] -= _removed[_partitionSize - 1];
+                }
+            }
+            _removed[_partitionSize - 1] = T.Zero;
+        }
         protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)
         {
             int selectedOffset = itemOffset - _offsets[partitionIndex];

@@ -1,17 +1,14 @@
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
     public class CircularMultiResolutionArray<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
-        public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedItemValue = 5000)
-            : base(partitionCount, partitionSize, magnitudeIncrease, anticipatedItemValue)
+        public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease)
+            : base(partitionCount, partitionSize, magnitudeIncrease)
         {
         }
 
-        public T First() => GetWithNonCircularItemIndex(0, 0);
 
         public void PushFront(T value)
         {

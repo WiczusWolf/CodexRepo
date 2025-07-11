@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using static MyConsoleApp.IntMath;
 
@@ -29,9 +28,8 @@ namespace MyConsoleApp
         protected readonly int _partitionLog;
         protected int _countModLast;
         protected readonly int _partitionSizeMask;
-        protected readonly T _runningSumMaxBeforeReset;
 
-        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedItemValue)
+        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease)
         {
             if (!partitionSize.IsPowerOfTwo() || partitionSize <= 0)
                 throw new ArgumentException($"Partition Size must be a power of 2, got {partitionSize}.");
@@ -53,7 +51,6 @@ namespace MyConsoleApp
             _offsets = new int[_partitionCount];
             _modulos = new int[_partitionCount];
             _modulos[0] = 1;
-            _runningSumMaxBeforeReset = T.CreateChecked(_maxSize * anticipatedItemValue);
             for (int i = 1; i < _partitionCount; i++)
             {
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
@@ -63,6 +60,7 @@ namespace MyConsoleApp
                 _partitions[i] = new T[_partitionSize];
             }
         }
+        public T First() => GetWithNonCircularItemIndex(0, 0);
 
         protected void IncrementModuloCount() => _countModLast = (_countModLast + 1) % _modulos[_partitionCount - 1];
 
