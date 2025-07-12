@@ -81,14 +81,15 @@ namespace MyConsoleApp
                 ? -(magnitude - (index << 1) - 1)
                 : ((index << 1) - magnitude + 1);
 
-        protected T SwitchOnGreaterOrEqualZero(int comparator, T onLower, T onGreater)
+        protected static T SwitchOnGreaterOrEqualZero(int comparator, T onLower, T onGreater)
         {
             int isGE = ~(comparator >> 31) & 1;
             T flag = T.CreateTruncating(isGE);
             return onLower + (onGreater - onLower) * flag;
         }
 
-        protected T Interpolate(T current, T previous, T next, int offset, int maxOffset)
+        //Triangle interpolation that has local extrema at current. If offset = maxOffset the value will be the next value. Respectively -offset = maxoffset will be the previous. 
+        protected static T Interpolate(T current, T previous, T next, int offset, int maxOffset)
         {
             int absOff = FastAbs(offset);
             var invMax = T.One / T.CreateTruncating(maxOffset);
@@ -150,24 +151,6 @@ namespace MyConsoleApp
 
         protected abstract (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset);
 
-        protected virtual T PostProcess(T value) => value;
-
-        private protected T InterpolatedAt(CMRIndex index)
-        {
-            int partitionIndex = index.PartitionIndex;
-            int itemIndex = index.ItemIndex;
-            int itemOffset = index.Offset;
-
-            T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
-            T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
-                _removed[partitionIndex]);
-            T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
-
-            var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
-            return PostProcess(Interpolate(current, previous, next, offset, maxOffset));
-        }
-
-        public virtual T this[CMRIndex index] => InterpolatedAt(index);
+        public abstract T this[CMRIndex index] { get; }
     }
 }

@@ -10,6 +10,7 @@ namespace MyConsoleApp
         private T _runningSum = T.Zero;
         private readonly T _runningWeightedSumMaxBeforeReset;
 
+
         public CircularMultiResolutionWeightedSum(ICMRObject<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
             : base(partitionCount, partitionSize, magnitudeIncrease)
         {
@@ -21,10 +22,10 @@ namespace MyConsoleApp
 
         private void OnPushFront()
         {
-            _xCounter++;
             T value = _src.First();
             _runningSum += value;
             _runningWeightedSum += T.CreateTruncating(_xCounter) * value;
+            _xCounter++;
 
             for (int i = 0; i < _partitionCount; i++)
             {
@@ -72,7 +73,6 @@ namespace MyConsoleApp
             return (selectedOffset, _modulos[partitionIndex]);
         }
 
-        protected override T PostProcess(T value) => value - _removed[_partitionCount - 1];
 
         private void ResetCounterIfNeeded()
         {
@@ -91,5 +91,14 @@ namespace MyConsoleApp
             }
             _xCounter -= _maxSize;
         }
+
+        public override T this[CMRIndex index]
+        {
+            get
+            {
+                return T.Zero;
+            }
+        }
+
     }
 }

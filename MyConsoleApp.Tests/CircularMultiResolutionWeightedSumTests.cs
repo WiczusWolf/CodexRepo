@@ -28,6 +28,31 @@ public class CircularMultiResolutionWeightedSumTests
 
         Assert.AreEqual(weighted.MaxSize, weighted.Count);
     }
+    [TestMethod]
+    public void RepeatingData()
+    {
+        var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
+        var weighted = new CircularMultiResolutionWeightedSum<float>(arr, 1, 8, 2);
+
+        arr.PushFront(7);
+        Assert.AreEqual(weighted[weighted.GetIndex(0)], 0, 1e-4, $"Count:1,Index:0");
+        arr.PushFront(8);
+        Assert.AreEqual(weighted[weighted.GetIndex(0)], 8, 1e-4, $"Count:1,Index:0");
+        Assert.AreEqual(weighted[weighted.GetIndex(1)], 0, 1e-4, $"Count:1,Index:0");
+        arr.PushFront(9);
+        Assert.AreEqual(weighted[weighted.GetIndex(0)], 26, 1e-4, $"Count:1,Index:0");
+        Assert.AreEqual(weighted[weighted.GetIndex(1)], 8, 1e-4, $"Count:1,Index:0");
+        Assert.AreEqual(weighted[weighted.GetIndex(2)], 0, 1e-4, $"Count:1,Index:0");
+        arr.PushFront(7);//4
+        arr.PushFront(8);//5
+        arr.PushFront(9);//6
+        arr.PushFront(7);//7
+        arr.PushFront(8);//8 items
+        arr.PushFront(9);
+        var a = weighted[weighted.GetIndex(0)];
+        Assert.AreEqual(weighted[weighted.GetIndex(0)], 229, 1e-4, $"Count:1,Index:0");
+
+    }
 
     [TestMethod]
     public void WeightedSumHandlesRemovalGracefully()

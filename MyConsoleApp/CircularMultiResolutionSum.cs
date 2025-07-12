@@ -1,4 +1,5 @@
 using System.Numerics;
+using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
@@ -63,6 +64,26 @@ namespace MyConsoleApp
             return (selectedOffset, _modulos[partitionIndex]);
         }
 
-        protected override T PostProcess(T value) => value - _removed[_partitionCount - 1];
+        public override T this[CMRIndex index]
+        {
+            get
+            {
+
+                {
+                    int partitionIndex = index.PartitionIndex;
+                    int itemIndex = index.ItemIndex;
+                    int itemOffset = index.Offset;
+
+                    T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
+                    T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                        GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                        _removed[partitionIndex]);
+                    T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
+
+                    var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                    return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
+                }
+            }
+        }
     }
 }

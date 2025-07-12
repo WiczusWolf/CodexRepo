@@ -1,4 +1,5 @@
 using System.Numerics;
+using static MyConsoleApp.IntMath;
 
 namespace MyConsoleApp
 {
@@ -52,6 +53,28 @@ namespace MyConsoleApp
             }
 
             return sum / T.CreateTruncating(_magnitudeIncrease);
+        }
+
+        public override T this[CMRIndex index]
+        {
+            get
+            {
+
+                {
+                    int partitionIndex = index.PartitionIndex;
+                    int itemIndex = index.ItemIndex;
+                    int itemOffset = index.Offset;
+
+                    T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
+                    T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                        GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                        _removed[partitionIndex]);
+                    T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
+
+                    var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                    return Interpolate(current, previous, next, offset, maxOffset);
+                }
+            }
         }
     }
 }
