@@ -11,11 +11,10 @@ namespace MyConsoleApp
         public int PartitionSize => _partitionSize;
         public int MagnitudeIncrease => _magnitudeIncrease;
         public int PartitionCount => _partitionCount;
-        public IReadOnlyCollection<T>[] Partitions => _partitions.Select(p => p.AsReadOnly()).ToArray();
+        //public IReadOnlyCollection<T>[] Partitions => _partitions.Select(p => p.AsReadOnly()).ToArray();
 
         protected readonly EventHandlerSync OnValueAdded = new();
-        protected readonly T[][] _partitions;
-        protected readonly T[] _removed;
+
         protected readonly int[] _cursors;
         protected readonly int[] _modulos;
         protected readonly int[] _offsets;
@@ -44,9 +43,7 @@ namespace MyConsoleApp
             _partitionLog = BitOperations.Log2((uint)magnitudeIncrease);
             _partitionSizeMask = _partitionSize - 1;
             _maxSize = _partitionSize * Pow(magnitudeIncrease, partitionCount - 1);
-            _partitions = new T[_partitionCount][];
             _cursors = new int[_partitionCount];
-            _removed = new T[_partitionCount];
             _offsets = new int[_partitionCount];
             _modulos = new int[_partitionCount];
             _modulos[0] = 1;
@@ -54,16 +51,19 @@ namespace MyConsoleApp
             {
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
             }
-            for (int i = 0; i < _partitionCount; i++)
-            {
-                _partitions[i] = new T[_partitionSize];
-            }
+
+            //_removed = new T[_partitionCount];
+            //_partitions = new T[_partitionCount][];
+            //for (int i = 0; i < _partitionCount; i++)
+            //{
+            //    _partitions[i] = new T[_partitionSize];
+            //}
         }
 
         public void SubscribeValueAdded(Action action) => OnValueAdded.Add(action);
         public void UnsubscribeValueAdded(Action action) => OnValueAdded.Remove(action);
 
-        public T First() => GetWithNonCircularItemIndex(0, 0);
+        public abstract T First();
 
         protected void IncrementModuloCount() => _countModLast = (_countModLast + 1) % _modulos[_partitionCount - 1];
 
@@ -100,7 +100,7 @@ namespace MyConsoleApp
             return current * currFrac + SwitchOnGreaterOrEqualZero(offset, frac * previous, frac * next);
         }
 
-        protected T GetWithNonCircularItemIndex(int partitionIndex, int nonCircularIndex)
+        protected T GetWithNonCircularItemIndex(T[][] src, int partitionIndex, int nonCircularIndex)
         {
 #if SAFE
             int realItemIndex = (_cursors[partitionIndex] - nonCircularIndex - 1) & _partitionSizeMask;
@@ -110,7 +110,7 @@ namespace MyConsoleApp
             {
                 int realItemIndex = _cursors[partitionIndex] - nonCircularIndex - 1 & _partitionSizeMask;
 #pragma warning disable CS8500
-                fixed (T* arr = _partitions[partitionIndex])
+                fixed (T* arr = src[partitionIndex])
                 {
                     return arr[realItemIndex];
                 }

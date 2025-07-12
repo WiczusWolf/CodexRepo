@@ -1,26 +1,23 @@
 namespace MyConsoleApp
 {
-    internal class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {
-            CircularMultiResolutionArray<double> src = new CircularMultiResolutionArray<double>(3, 8, 4);
-            var parameters = StandardDeviation<double>.CreateParameters(src, 10);
-            StandardDeviation<double> standardDeviation = new(parameters.squaredSumSrc, parameters.sumSrc, parameters.to, parameters.from, parameters.itemCount);
-
-            double entry = 10;
-            for (int i = 0; i < 15; i++)
+            var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
+            var weighted = new CircularMultiResolutionWeightedSum<float>(arr, 1, 8, 2);
+            float[] vals = [7.0f, 8.0f, 9.0f];
+            for (int i = 0; i < 14; i++)
             {
-                src.PushFront(entry);
-                Console.WriteLine(standardDeviation.Value);
+                if (i == 13)
+                {
+                }
+                int valIndex = i % 3;
+                arr.PushFront(vals[valIndex]);
             }
-
-            for (int i = 0; i < 15; i++)
-            {
-                src.PushFront(entry + Random.Shared.Next(10) / 5 - 1);
-                Console.WriteLine(standardDeviation.Value);
-            }
-
+            weighted.ApplyRemoved();
+            arr.PushFront(9);
+            Console.WriteLine(weighted.ToString());
         }
     }
 }

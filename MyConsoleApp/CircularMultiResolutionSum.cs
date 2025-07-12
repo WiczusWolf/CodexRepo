@@ -8,6 +8,8 @@ namespace MyConsoleApp
         private readonly ICMRObject<T> _src;
         private T _runningSum = T.Zero;
         protected T _runningSumMaxBeforeReset;
+        protected readonly T[][] _partitions;
+        protected readonly T[] _removed;
         /// <summary>
         /// Default Constructor
         /// </summary>
@@ -18,10 +20,16 @@ namespace MyConsoleApp
         {
             _src = src;
             _runningSumMaxBeforeReset = T.CreateTruncating(anticipatedMaxItemValue * _maxSize * 2);
+            _removed = new T[_partitionCount];
+            _partitions = new T[_partitionCount][];
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                _partitions[i] = new T[_partitionSize];
+            }
+
             src.SubscribeValueAdded(OnPushFront);
         }
-
-
+        public override T First() => GetWithNonCircularItemIndex(_partitions, 0, 0) - _removed[_partitionCount - 1];
         private void OnPushFront()
         {
             _runningSum += _src.First();
@@ -69,20 +77,19 @@ namespace MyConsoleApp
             get
             {
 
-                {
-                    int partitionIndex = index.PartitionIndex;
-                    int itemIndex = index.ItemIndex;
-                    int itemOffset = index.Offset;
+                int partitionIndex = index.PartitionIndex;
+                int itemIndex = index.ItemIndex;
+                int itemOffset = index.Offset;
 
-                    T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
-                    T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                        GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
-                        _removed[partitionIndex]);
-                    T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
+                T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
+                T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                    GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                    _removed[partitionIndex]);
+                T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
 
-                    var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
-                    return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
-                }
+                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
+
             }
         }
     }

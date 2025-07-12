@@ -5,11 +5,20 @@ namespace MyConsoleApp
 {
     public class CircularMultiResolutionArray<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
+        protected readonly T[][] _partitions;
+        protected readonly T[] _removed;
         public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease)
             : base(partitionCount, partitionSize, magnitudeIncrease)
         {
+            _removed = new T[_partitionCount];
+            _partitions = new T[_partitionCount][];
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                _partitions[i] = new T[_partitionSize];
+            }
         }
 
+        public override T First() => GetWithNonCircularItemIndex(_partitions, 0, 0);
 
         public void PushFront(T value)
         {
@@ -65,11 +74,11 @@ namespace MyConsoleApp
                     int itemIndex = index.ItemIndex;
                     int itemOffset = index.Offset;
 
-                    T current = GetWithNonCircularItemIndex(partitionIndex, itemIndex);
+                    T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
                     T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                        GetWithNonCircularItemIndex(partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                        GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
                         _removed[partitionIndex]);
-                    T previous = GetWithNonCircularItemIndex(partitionIndex, itemIndex - 1);
+                    T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
 
                     var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
                     return Interpolate(current, previous, next, offset, maxOffset);
