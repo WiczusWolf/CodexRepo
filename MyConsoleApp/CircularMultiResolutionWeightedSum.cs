@@ -78,8 +78,9 @@ namespace MyConsoleApp
 
         protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)
         {
-            int selectedOffset = itemOffset - _offsets[partitionIndex];
-            return (selectedOffset, _modulos[partitionIndex]);
+            int maxOffset = _modulos[partitionIndex];
+            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - _offsets[partitionIndex] * 2;
+            return (selectedOffset, maxOffset * 2);
         }
 
 
@@ -130,12 +131,25 @@ namespace MyConsoleApp
                 int itemIndex = index.ItemIndex;
                 int itemOffset = index.Offset;
 
-                T currentSXYWindowDelta = GetWithNonCircularItemIndex(_runningXYSums, _partitionCount - 1, _partitionSize - 1);
-                T currentSYWindowDelta = GetWithNonCircularItemIndex(_runningYSums, _partitionCount - 1, _partitionSize - 1);
                 T currentSXY = GetWithNonCircularItemIndex(_runningXYSums, partitionIndex, itemIndex);
+                T nextSXY = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                    GetWithNonCircularItemIndex(_runningXYSums, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                    _removedXYSums[partitionIndex]);
+                T previousSXY = GetWithNonCircularItemIndex(_runningXYSums, partitionIndex, itemIndex - 1);
+
                 T currentSY = GetWithNonCircularItemIndex(_runningYSums, partitionIndex, itemIndex);
-                T currentSXYWindow = currentSXY - _removedXYSums[_partitionCount - 1];
-                T currentSYWindow = currentSY - _removedYSums[_partitionCount - 1];
+                T nextSY = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                    GetWithNonCircularItemIndex(_runningYSums, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                    _removedYSums[partitionIndex]);
+                T previousSY = GetWithNonCircularItemIndex(_runningYSums, partitionIndex, itemIndex - 1);
+
+                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+
+                T interpSXY = Interpolate(currentSXY, previousSXY, nextSXY, offset, maxOffset);
+                T interpSY = Interpolate(currentSY, previousSY, nextSY, offset, maxOffset);
+
+                T currentSXYWindow = interpSXY - _removedXYSums[_partitionCount - 1];
+                T currentSYWindow = interpSY - _removedYSums[_partitionCount - 1];
                 T weightAdjustedSYWindow = currentSYWindow * T.CreateTruncating(FastMax(0, _xCounter - _maxSize));
                 return currentSXYWindow - weightAdjustedSYWindow;
             }
