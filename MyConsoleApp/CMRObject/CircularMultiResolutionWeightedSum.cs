@@ -1,7 +1,8 @@
 using System.Numerics;
 using static MyConsoleApp.IntMath;
+using static MyConsoleApp.INumberMath;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.CMRObject
 {
     public class CircularMultiResolutionWeightedSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
@@ -37,51 +38,35 @@ namespace MyConsoleApp
             src.SubscribeValueAdded(OnPushFront);
         }
 
-        private void OnPushFront()
+        protected override void Assign(int realPartitionIndex, int realItemIndex)
         {
-            T value = _src.First();
+            _removedYSums[realPartitionIndex] = _runningYSums[realPartitionIndex][realItemIndex];
+            _runningYSums[realPartitionIndex][_cursors[realPartitionIndex]] = _runningSum;
 
+            _removedXYSums[realPartitionIndex] = _runningXYSums[realPartitionIndex][realItemIndex];
+            _runningXYSums[realPartitionIndex][realItemIndex] = _runningWeightedSum;
+        }
+        protected override void AssignFirst(T value, int realItemIndex)
+        {
             _runningSum += value;
             _runningWeightedSum += T.CreateTruncating(_xCounter) * value;
-
             _xCounter++;
 
-            for (int i = 0; i < _partitionCount; i++)
-            {
-                if (_countModLast % _modulos[i] == 0)
-                {
-                    _removedYSums[i] = _runningYSums[i][_cursors[i]];
-                    _runningYSums[i][_cursors[i]] = _runningSum;
+            _removedYSums[0] = _runningYSums[0][realItemIndex];
+            _runningYSums[0][_cursors[0]] = _runningSum;
 
-                    _removedXYSums[i] = _runningXYSums[i][_cursors[i]];
-                    _runningXYSums[i][_cursors[i]] = _runningWeightedSum;
-
-                    _cursors[i] = (_cursors[i] + 1) % _partitionSize;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-
-            IncrementModuloCount();
-            AdvanceCounters(-1);
-
-            if (_runningWeightedSum >= _runningWeightedSumMaxBeforeReset)
+            _removedXYSums[0] = _runningXYSums[0][realItemIndex];
+            _runningXYSums[0][realItemIndex] = _runningWeightedSum;
+        }
+        protected override void PostItemPush()
+        {
+            if (_runningSum >= _runningWeightedSumMaxBeforeReset)
             {
                 ApplyRemoved();
             }
-
-            OnValueAdded.Invoke();
         }
 
-        protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)
-        {
-            int maxOffset = _modulos[partitionIndex];
-            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - _offsets[partitionIndex] * 2;
-            return (selectedOffset, maxOffset * 2);
-        }
+        private void OnPushFront() => PushFront(_src.First());
 
 
         public void ApplyRemoved()
@@ -143,7 +128,7 @@ namespace MyConsoleApp
                     _removedYSums[partitionIndex]);
                 T previousSY = GetWithNonCircularItemIndex(_runningYSums, partitionIndex, itemIndex - 1);
 
-                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                var (offset, maxOffset) = ComputeOffsetFromPartitionEnd(partitionIndex, itemOffset);
 
                 T interpSXY = Interpolate(currentSXY, previousSXY, nextSXY, offset, maxOffset);
                 T interpSY = Interpolate(currentSY, previousSY, nextSY, offset, maxOffset);

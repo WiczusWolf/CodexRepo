@@ -12,7 +12,7 @@ namespace MyConsoleApp.ReductionObjects
         private CMRIndex _endIndex;
         private T _itemCount;
         private T _lastResult = T.Zero;
-        public RunningAverage(CircularMultiResolutionSum<T> src, uint to, uint from = 0)
+        public RunningAverage(CircularMultiResolutionSum<T> src, int to, int from = 0)
         {
             if (to <= from) throw new ArgumentException("To needs to be bigger than from. ");
             _circularMultiResolutionArray = src;

@@ -34,7 +34,7 @@ public class CircularMultiResolutionSumTests
         for (int i = 0; i < sum.Count; i++)
         {
             var expected = ExpectedRunningSum(values, i);
-            var actual = sum[sum.GetIndex((uint)i)];
+            var actual = sum[sum.GetIndex((int)i)];
             if (i < sum.PartitionSize)
             {
                 Assert.AreEqual(expected, actual, 1e-3, $"Index {i}");
@@ -76,7 +76,7 @@ public class CircularMultiResolutionSumTests
     {
         var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
         var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => sum.GetIndex((uint)(sum.MaxSize + 1)));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => sum.GetIndex((int)(sum.MaxSize + 1)));
     }
 
     [TestMethod]
@@ -134,7 +134,7 @@ public class CircularMultiResolutionSumTests
         var values = PushSequential(arr, 6);
         for (int i = 0; i < sum.Count; i++)
         {
-            var idx = sum.GetIndex((uint)i);
+            var idx = sum.GetIndex((int)i);
             Assert.AreEqual(sum[idx], sum[idx], 1e-5); // access to ensure index works
         }
     }

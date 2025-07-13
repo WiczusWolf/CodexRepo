@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Text;
 using static MyConsoleApp.IntMath;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.CMRObject
 {
     public abstract class CircularMultiResolutionBase<T> : ICMRObject<T> where T : INumber<T>
     {
@@ -18,14 +18,14 @@ namespace MyConsoleApp
         protected readonly int[] _cursors;
         protected readonly int[] _modulos;
         protected readonly int[] _offsets;
-        protected int _count;
         protected readonly int _maxSize;
         protected readonly int _partitionCount;
         protected readonly int _partitionSize;
         protected readonly int _magnitudeIncrease;
         protected readonly int _partitionLog;
-        protected int _countModLast;
         protected readonly int _partitionSizeMask;
+        protected int _modulatedItemCount;
+        protected int _count;
 
         protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease)
         {
@@ -51,95 +51,62 @@ namespace MyConsoleApp
             {
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
             }
-
-            //_removed = new T[_partitionCount];
-            //_partitions = new T[_partitionCount][];
-            //for (int i = 0; i < _partitionCount; i++)
-            //{
-            //    _partitions[i] = new T[_partitionSize];
-            //}
         }
 
         public void SubscribeValueAdded(Action action) => OnValueAdded.Add(action);
         public void UnsubscribeValueAdded(Action action) => OnValueAdded.Remove(action);
 
         public abstract T First();
+        public abstract T this[CMRIndex index] { get; }
+        protected abstract void AssignFirst(T value, int realItemIndex);
+        protected abstract void Assign(int realPartitionIndex, int realItemIndex);
+        protected abstract void PostItemPush();
 
-        protected void IncrementModuloCount() => _countModLast = (_countModLast + 1) % _modulos[_partitionCount - 1];
-
-        protected void AdvanceCounters(int offsetAdjustment)
+        public void PushFront(T value)
         {
-            _count = Math.Min(_count + 1, _maxSize);
-            for (int i = 0; i < _partitionCount; i++)
+            AssignFirst(value, _cursors[0]);
+            AdvanceCounters();
+            _cursors[0] = (_cursors[0] + 1) % _partitionSize;
+
+            for (int i = 1; i < _partitionCount; i++)
             {
-                _offsets[i] = (_modulos[i] + _countModLast + offsetAdjustment) % _modulos[i];
-            }
-        }
-
-        protected static int QuadraticOffset(int index, int magnitude) =>
-            index < (magnitude >> 1)
-                ? -(magnitude - (index << 1) - 1)
-                : ((index << 1) - magnitude + 1);
-
-        protected static T SwitchOnGreaterOrEqualZero(int comparator, T onLower, T onGreater)
-        {
-            int isGE = ~(comparator >> 31) & 1;
-            T flag = T.CreateTruncating(isGE);
-            return onLower + (onGreater - onLower) * flag;
-        }
-
-        //Triangle interpolation that has local extrema at current. If offset = maxOffset the value will be the next value. Respectively -offset = maxoffset will be the previous. 
-        protected static T Interpolate(T current, T previous, T next, int offset, int maxOffset)
-        {
-            int absOff = FastAbs(offset);
-            var invMax = T.One / T.CreateTruncating(maxOffset);
-
-            T frac = T.CreateTruncating(absOff) * invMax;
-
-            T currFrac = T.One - frac;
-            return current * currFrac + SwitchOnGreaterOrEqualZero(offset, frac * previous, frac * next);
-        }
-
-        protected T GetWithNonCircularItemIndex(T[][] src, int partitionIndex, int nonCircularIndex)
-        {
-#if SAFE
-            int realItemIndex = (_cursors[partitionIndex] - nonCircularIndex - 1) & _partitionSizeMask;
-            return _partitions[partitionIndex][realItemIndex];
-#else
-            unsafe
-            {
-                int realItemIndex = _cursors[partitionIndex] - nonCircularIndex - 1 & _partitionSizeMask;
-#pragma warning disable CS8500
-                fixed (T* arr = src[partitionIndex])
+                if (_modulatedItemCount % _modulos[i] == 0)
                 {
-                    return arr[realItemIndex];
+                    Assign(i, _cursors[i]);
+                    _cursors[i] = (_cursors[i] + 1) % _partitionSize;
                 }
-#pragma warning restore CS8500
+                else
+                {
+                    break;
+                }
             }
-#endif
+            PostItemPush();
+            OnValueAdded.Invoke();
         }
-
-        public CMRIndex GetIndex(uint index)
+        public CMRIndex GetIndex(int index)
         {
             if (index > _maxSize)
             {
                 throw new ArgumentOutOfRangeException(nameof(index), $"Index must be in range 0 to {_maxSize}, got {index}.");
             }
-            uint partitionIndex = index / (uint)_partitionSize;
+            int partitionIndex = index / _partitionSize;
+            if (partitionIndex == 0) return new CMRIndex(0, index, 0);
             if (partitionIndex > 0)
             {
-                partitionIndex = (uint)BitOperations.Log2(partitionIndex) / (uint)_partitionLog + 1;
+                partitionIndex = BitOperations.Log2((uint)partitionIndex) / _partitionLog + 1;
             }
-            int itemIndex = (int)index / _modulos[partitionIndex];
-            int offset = (int)index % _modulos[partitionIndex];
-            return new CMRIndex((int)partitionIndex, itemIndex, offset);
+            int itemC = index;
+            //int itemC = index + 1 - _modulos[partitionIndex];
+            int itemIndex = itemC / _modulos[partitionIndex];
+            int offset = itemC % _modulos[partitionIndex];
+            return new CMRIndex(partitionIndex, itemIndex, offset);
         }
 
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append('[');
-            for (uint i = 0; i < _count; i++)
+            for (int i = 0; i < _count; i++)
             {
                 sb.Append(this[GetIndex(i)]);
                 sb.Append(", ");
@@ -148,9 +115,35 @@ namespace MyConsoleApp
             sb.Append(']');
             return sb.ToString();
         }
+        protected T GetWithNonCircularItemIndex(T[][] src, int partitionIndex, int nonCircularIndex)
+        {
+            int currentFirstIndex = _cursors[partitionIndex] - 1;
+            int realItemIndex = (currentFirstIndex - nonCircularIndex) & _partitionSizeMask;
+            return src[partitionIndex][realItemIndex];
+        }
 
-        protected abstract (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset);
+        protected (int offset, int maxOffset) ComputeOffsetFromHalfPartition(int partitionIndex, int itemOffset)
+        {
+            if (partitionIndex == 0) return (itemOffset, _modulos[partitionIndex]);
 
-        public abstract T this[CMRIndex index] { get; }
+            int maxOffset = _modulos[partitionIndex];
+            int offset = _cursors[partitionIndex] % maxOffset;
+            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - maxOffset * 2;
+            return (selectedOffset, maxOffset * 2);
+        }
+        protected (int offset, int maxOffset) ComputeOffsetFromPartitionEnd(int partitionIndex, int itemOffset)
+        {
+            return (itemOffset + _offsets[partitionIndex], _modulos[partitionIndex]);
+        }
+
+        private void AdvanceCounters()
+        {
+            _count = Math.Min(_count + 1, _maxSize);
+            for (int i = 0; i < _partitionCount; i++)
+            {
+                _offsets[i] = (_offsets[i] + 1) % _modulos[i];
+            }
+            _modulatedItemCount = (_modulatedItemCount + 1) % _maxSize;
+        }
     }
 }

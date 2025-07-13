@@ -34,7 +34,7 @@ namespace MyConsoleApp.ReductionObjects
         }
 
         public static (ICMRObject<T> squaredSumSrc, ICMRObject<T> sumSrc, CMRIndex to, CMRIndex from, int itemCount)
-            CreateParameters<T>(CircularMultiResolutionArray<T> srcArray, uint to, uint from = 0) where T : INumber<T>, IRootFunctions<T>
+            CreateParameters<T>(CircularMultiResolutionArray<T> srcArray, int to, int from = 0) where T : INumber<T>, IRootFunctions<T>
         {
             CMRIndex fromIndex = srcArray.GetIndex(from);
             CMRIndex toIndex = srcArray.GetIndex(to);

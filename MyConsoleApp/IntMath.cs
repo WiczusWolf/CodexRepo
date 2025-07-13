@@ -1,9 +1,14 @@
 ﻿using System.Runtime.CompilerServices;
-
 namespace MyConsoleApp
 {
     public static class IntMath
     {
+
+        public static int QuadraticOffset(int index, int magnitude) =>
+            index < magnitude >> 1
+            ? -(magnitude - (index << 1) - 1)
+            : (index << 1) - magnitude + 1;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsPowerOfTwo(this int n) => n > 0 && (n & n - 1) == 0;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

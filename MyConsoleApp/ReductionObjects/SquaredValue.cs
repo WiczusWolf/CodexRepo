@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.ReductionObjects
 {
     public class SquaredValue<T> : ICMRObject<T> where T : INumber<T>
     {

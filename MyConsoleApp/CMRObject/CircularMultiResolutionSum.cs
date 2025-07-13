@@ -1,14 +1,15 @@
 using System.Numerics;
 using static MyConsoleApp.IntMath;
+using static MyConsoleApp.INumberMath;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.CMRObject
 {
     public class CircularMultiResolutionSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
         private readonly ICMRObject<T> _src;
         private T _runningSum = T.Zero;
         protected T _runningSumMaxBeforeReset;
-        protected readonly T[][] _partitions;
+        protected readonly T[][] _runningSums;
         protected readonly T[] _removed;
         /// <summary>
         /// Default Constructor
@@ -21,55 +22,45 @@ namespace MyConsoleApp
             _src = src;
             _runningSumMaxBeforeReset = T.CreateTruncating(anticipatedMaxItemValue * _maxSize * 2);
             _removed = new T[_partitionCount];
-            _partitions = new T[_partitionCount][];
+            _runningSums = new T[_partitionCount][];
             for (int i = 0; i < _partitionCount; i++)
             {
-                _partitions[i] = new T[_partitionSize];
+                _runningSums[i] = new T[_partitionSize];
             }
 
             src.SubscribeValueAdded(OnPushFront);
         }
-        public override T First() => GetWithNonCircularItemIndex(_partitions, 0, 0) - _removed[_partitionCount - 1];
-        private void OnPushFront()
+        public override T First() => GetWithNonCircularItemIndex(_runningSums, 0, 0) - _removed[_partitionCount - 1];
+        protected override void Assign(int realPartitionIndex, int realItemIndex)
         {
-            _runningSum += _src.First();
-            for (int i = 0; i < _partitionCount; i++)
-            {
-                if (_countModLast % _modulos[i] == 0)
-                {
-                    _removed[i] = _partitions[i][_cursors[i]];
-                    _partitions[i][_cursors[i]] = _runningSum;
-                    _cursors[i] = (_cursors[i] + 1) % _partitionSize;
-                }
-                else
-                {
-                    break;
-                }
-            }
+            _removed[realPartitionIndex] = _runningSums[realPartitionIndex][realItemIndex];
+            _runningSums[realPartitionIndex][_cursors[realPartitionIndex]] = _runningSum;
+        }
 
-            IncrementModuloCount();
-            AdvanceCounters(-1);
+        protected override void AssignFirst(T value, int realItemIndex)
+        {
+            _runningSum += value;
+            _removed[0] = _runningSums[0][realItemIndex];
+            _runningSums[0][realItemIndex] = value;
+        }
+        protected override void PostItemPush()
+        {
             if (_runningSum >= _runningSumMaxBeforeReset)
             {
                 ApplyRemoved();
             }
-            OnValueAdded.Invoke();
         }
+        private void OnPushFront() => PushFront(_src.First());
         private void ApplyRemoved()
         {
             for (int i = 0; i < _partitionCount; i++)
             {
                 for (int j = 0; j < _partitionSize; j++)
                 {
-                    _partitions[i][j] -= _removed[_partitionSize - 1];
+                    _runningSums[i][j] -= _removed[_partitionSize - 1];
                 }
             }
             _removed[_partitionSize - 1] = T.Zero;
-        }
-        protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)
-        {
-            int selectedOffset = itemOffset - _offsets[partitionIndex];
-            return (selectedOffset, _modulos[partitionIndex]);
         }
 
         public override T this[CMRIndex index]
@@ -81,13 +72,13 @@ namespace MyConsoleApp
                 int itemIndex = index.ItemIndex;
                 int itemOffset = index.Offset;
 
-                T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
+                T current = GetWithNonCircularItemIndex(_runningSums, partitionIndex, itemIndex);
                 T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                    GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                    GetWithNonCircularItemIndex(_runningSums, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
                     _removed[partitionIndex]);
-                T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
+                T previous = GetWithNonCircularItemIndex(_runningSums, partitionIndex, itemIndex - 1);
 
-                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                var (offset, maxOffset) = ComputeOffsetFromPartitionEnd(partitionIndex, itemOffset);
                 return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
 
             }

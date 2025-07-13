@@ -1,3 +1,5 @@
+using MyConsoleApp.CMRObject;
+
 namespace MyConsoleApp
 {
     internal static class Program

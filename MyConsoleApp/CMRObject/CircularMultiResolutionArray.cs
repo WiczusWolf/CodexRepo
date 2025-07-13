@@ -1,7 +1,8 @@
 using System.Numerics;
 using static MyConsoleApp.IntMath;
+using static MyConsoleApp.INumberMath;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.CMRObject
 {
     public class CircularMultiResolutionArray<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
@@ -20,44 +21,25 @@ namespace MyConsoleApp
 
         public override T First() => GetWithNonCircularItemIndex(_partitions, 0, 0);
 
-        public void PushFront(T value)
+        protected override void Assign(int realPartitionIndex, int realItemIndex)
         {
-            _partitions[0][_cursors[0]] = value;
-            _cursors[0] = (_cursors[0] + 1) % _partitionSize;
-            IncrementModuloCount();
-
-            for (int i = 1; i < _partitionCount; i++)
-            {
-                if (_countModLast % _modulos[i] == 0)
-                {
-                    _removed[i] = _partitions[i][_cursors[i]];
-                    _partitions[i][_cursors[i]] = AverageFromPartition(i - 1);
-                    _cursors[i] = (_cursors[i] + 1) % _partitionSize;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            AdvanceCounters(0);
-            OnValueAdded.Invoke();
+            _removed[realPartitionIndex] = _partitions[realPartitionIndex][realItemIndex];
+            _partitions[realPartitionIndex][realItemIndex] = AverageFromPartition(realPartitionIndex - 1);
         }
-
-        protected override (int offset, int maxOffset) ComputeOffset(int partitionIndex, int itemOffset)
+        protected override void AssignFirst(T value, int realItemIndex)
         {
-            int maxOffset = _modulos[partitionIndex];
-            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - _offsets[partitionIndex] * 2;
-            return (selectedOffset, maxOffset * 2);
+            _partitions[0][realItemIndex] = value;
         }
-
+        protected override void PostItemPush()
+        {
+        }
         private T AverageFromPartition(int partitionIndex)
         {
-            int realItemIndex = (_cursors[partitionIndex]) & _partitionSizeMask;
+            int realItemIndex = _cursors[partitionIndex] & _partitionSizeMask;
             T sum = T.Zero;
             for (int i = 0; i < _magnitudeIncrease; i++)
             {
-                realItemIndex = (realItemIndex - 1) & _partitionSizeMask;
+                realItemIndex = realItemIndex - 1 & _partitionSizeMask;
                 sum += _partitions[partitionIndex][realItemIndex];
             }
 
@@ -78,7 +60,7 @@ namespace MyConsoleApp
                     _removed[partitionIndex]);
                 T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
 
-                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                var (offset, maxOffset) = ComputeOffsetFromHalfPartition(partitionIndex, itemOffset);
                 return Interpolate(current, previous, next, offset, maxOffset);
             }
         }
