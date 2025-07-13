@@ -97,7 +97,7 @@ namespace MyConsoleApp.CMRObject
             }
             int itemC = index;
             //int itemC = index + 1 - _modulos[partitionIndex];
-            int itemIndex = itemC / _modulos[partitionIndex];
+            int itemIndex = (itemC / _modulos[partitionIndex]);
             int offset = itemC % _modulos[partitionIndex];
             return new CMRIndex(partitionIndex, itemIndex, offset);
         }
@@ -118,6 +118,7 @@ namespace MyConsoleApp.CMRObject
         protected T GetWithNonCircularItemIndex(T[][] src, int partitionIndex, int nonCircularIndex)
         {
             int currentFirstIndex = _cursors[partitionIndex] - 1;
+            int invertedIndex = _partitionSize - nonCircularIndex;
             int realItemIndex = (currentFirstIndex - nonCircularIndex) & _partitionSizeMask;
             return src[partitionIndex][realItemIndex];
         }
@@ -133,7 +134,7 @@ namespace MyConsoleApp.CMRObject
         }
         protected (int offset, int maxOffset) ComputeOffsetFromPartitionEnd(int partitionIndex, int itemOffset)
         {
-            return (itemOffset + _offsets[partitionIndex], _modulos[partitionIndex]);
+            return (itemOffset - _offsets[partitionIndex], _modulos[partitionIndex]);//?
         }
 
         private void AdvanceCounters()

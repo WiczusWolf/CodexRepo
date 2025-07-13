@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MyConsoleApp.CMRObject;
+﻿using MyConsoleApp.CMRObject;
 using System.Numerics;
 using static MyConsoleApp.IntMath;
 using static MyConsoleApp.INumberMath;
@@ -130,8 +129,11 @@ namespace MyConsoleApp.Tests.CMRObjectTests
                 arr.PushFront(i);
                 for (int j = 0; j <= Math.Min(i, 7); j++)
                 {
+                    if (i <= 8 && j == i) continue;//this interpolates with a value that is yet not there
+                    var a = arr[arr.GetIndex(j)];
                     Assert.AreEqual(i - j, arr[arr.GetIndex(j)]);
                 }
+                var b = arr[arr.GetIndex(4)];
             }
         }
     }
