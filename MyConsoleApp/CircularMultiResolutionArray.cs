@@ -68,21 +68,18 @@ namespace MyConsoleApp
         {
             get
             {
+                int partitionIndex = index.PartitionIndex;
+                int itemIndex = index.ItemIndex;
+                int itemOffset = index.Offset;
 
-                {
-                    int partitionIndex = index.PartitionIndex;
-                    int itemIndex = index.ItemIndex;
-                    int itemOffset = index.Offset;
+                T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
+                T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
+                    GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
+                    _removed[partitionIndex]);
+                T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
 
-                    T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
-                    T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                        GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
-                        _removed[partitionIndex]);
-                    T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
-
-                    var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
-                    return Interpolate(current, previous, next, offset, maxOffset);
-                }
+                var (offset, maxOffset) = ComputeOffset(partitionIndex, itemOffset);
+                return Interpolate(current, previous, next, offset, maxOffset);
             }
         }
     }
