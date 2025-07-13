@@ -1,3 +1,5 @@
+using MyConsoleApp.ReductionObjects;
+
 namespace MyConsoleApp.Tests;
 
 [TestClass]

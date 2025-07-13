@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿using MyConsoleApp.CMRObject;
+using System.Numerics;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.ReductionObjects
 {
     public class StandardDeviation<T> where T : INumber<T>, IRootFunctions<T>, IEquatable<T>, IComparable<T>
     {
@@ -77,7 +78,7 @@ namespace MyConsoleApp
             T sumOfSquares = _squaredSumSrc[_from] - _squaredSumSrc[_to];
             T sum = _sumSrc[_from] - _sumSrc[_to];
 
-            T variance = (sumOfSquares - (sum * sum) / _itemCount) / (_itemCount - T.One);
+            T variance = (sumOfSquares - sum * sum / _itemCount) / (_itemCount - T.One);
             if (variance < T.Zero) variance = T.Zero;
             _value = T.Sqrt(variance);
         }

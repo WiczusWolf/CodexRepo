@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿using MyConsoleApp.CMRObject;
+using System.Numerics;
 
-namespace MyConsoleApp
+namespace MyConsoleApp.ReductionObjects
 {
     public class RunningAverage<T> where T : INumber<T>
     {

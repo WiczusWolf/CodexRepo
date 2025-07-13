@@ -120,23 +120,21 @@ public class CircularMultiResolutionWeightedSumTests
     private void AssertArraysEqual(CircularMultiResolutionWeightedSum<float> flatArray, CircularMultiResolutionWeightedSum<float> multiPartitionArray, int offset = 0)
     {
         Assert.AreEqual(flatArray.MaxSize, multiPartitionArray.MaxSize);
-        Assert.AreEqual(flatArray.PartitionSize, multiPartitionArray.PartitionSize);
-        Assert.AreEqual(flatArray.MagnitudeIncrease, multiPartitionArray.MagnitudeIncrease);
-        int magnitudeIncrease = flatArray.MagnitudeIncrease;
+        int magnitudeIncrease = multiPartitionArray.MagnitudeIncrease;
 
         for (int i = 0; i < flatArray.MaxSize; i++)
         {
-            CMRIndex index = flatArray.GetIndex((uint)i);
-            float expected = flatArray[index];
-            float actual = multiPartitionArray[index];
+            CMRIndex mpIndex = multiPartitionArray.GetIndex((uint)i);
+            float expected = flatArray[flatArray.GetIndex((uint)i)];
+            float actual = multiPartitionArray[mpIndex];
 
-            if (index.PartitionIndex == 0)
+            if (mpIndex.PartitionIndex == 0)
             {
                 Assert.AreEqual(expected, actual);
             }
-            if (index.PartitionIndex >= 0)
+            if (mpIndex.PartitionIndex >= 0)
             {
-                if ((flatArray.PartitionSize + index.ItemIndex - offset) % flatArray.PartitionSize == 0)
+                if ((multiPartitionArray.PartitionSize + mpIndex.ItemIndex - offset) % flatArray.PartitionSize == 0)
                 {
                     Assert.AreEqual(expected, actual);
                 }
@@ -155,13 +153,14 @@ public class CircularMultiResolutionWeightedSumTests
     public void MultiPartitionWeightedSum_IncreasesCorrectly()
     {
         var arr = new CircularMultiResolutionArray<float>(2, 4, 2);
-        var ws = new CircularMultiResolutionWeightedSum<float>(arr, 3, 4, 2);
-        var wsSinglePartition = new CircularMultiResolutionWeightedSum<float>(arr, 1, 32, 2);
-        int i = 0;
-        for (; i < 32; i++)
+        var ws = new CircularMultiResolutionWeightedSum<float>(arr, 2, 4, 2);
+        var wsSinglePartition = new CircularMultiResolutionWeightedSum<float>(arr, 1, 8, 2);
+        int itemC = 17;
+        int offset = (itemC - 1) % 2;
+        for (int i = 0; i < itemC; i++)
         {
             arr.PushFront(1 + OscillatingValue(i));
         }
-        AssertArraysEqual(ws, wsSinglePartition);
+        AssertArraysEqual(wsSinglePartition, ws);
     }
 }

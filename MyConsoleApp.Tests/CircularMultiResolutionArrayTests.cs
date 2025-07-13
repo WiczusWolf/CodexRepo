@@ -1,3 +1,5 @@
+using MyConsoleApp.CMRObject;
+
 namespace MyConsoleApp.Tests;
 
 [TestClass]
