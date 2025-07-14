@@ -136,5 +136,51 @@ namespace MyConsoleApp.Tests.CMRObjectTests
                 var b = arr[arr.GetIndex(4)];
             }
         }
+
+        [TestMethod]
+        public void GetIndex_ReturnsExpectedValues_MultiplePartitions()
+        {
+            var arr = new CircularMultiResolutionBaseImpl<float>(3, 4, 2);
+
+            var expectations = new (int index, CMRIndex expected)[]
+            {
+                (0, new CMRIndex(0, 0, 0)),
+                (3, new CMRIndex(0, 3, 0)),
+                (4, new CMRIndex(1, 2, 0)),
+                (5, new CMRIndex(1, 2, 1)),
+                (7, new CMRIndex(1, 3, 1)),
+                (8, new CMRIndex(2, 2, 0)),
+                (9, new CMRIndex(2, 2, 1)),
+                (12, new CMRIndex(2, 3, 0)),
+                (15, new CMRIndex(2, 3, 3)),
+            };
+
+            foreach (var (index, expected) in expectations)
+            {
+                var actual = arr.GetIndex(index);
+                Assert.AreEqual(expected.PartitionIndex, actual.PartitionIndex, $"Partition for index {index}");
+                Assert.AreEqual(expected.ItemIndex, actual.ItemIndex, $"Item index for {index}");
+                Assert.AreEqual(expected.Offset, actual.Offset, $"Offset for {index}");
+            }
+        }
+
+        [TestMethod]
+        public void Retrieval_AfterMultiplePartitionsFilled()
+        {
+            var arr = new CircularMultiResolutionBaseImpl<float>(3, 4, 2);
+            int pushCount = arr.MaxSize + 5;
+
+            for (int i = 0; i < pushCount; i++)
+            {
+                arr.PushFront(i);
+            }
+
+            Assert.AreEqual(arr.MaxSize, arr.Count);
+
+            for (int i = 0; i < arr.MaxSize; i++)
+            {
+                Assert.AreEqual(pushCount - 1 - i, arr[arr.GetIndex(i)]);
+            }
+        }
     }
 }
