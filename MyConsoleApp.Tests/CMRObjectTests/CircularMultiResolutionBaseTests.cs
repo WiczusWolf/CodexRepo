@@ -129,9 +129,9 @@ namespace MyConsoleApp.Tests.CMRObjectTests
                 arr.PushFront(i);
                 for (int j = 0; j <= Math.Min(i, 7); j++)
                 {
-                    var a = arr[arr.GetIndex(j)];
+                    Assert.AreEqual(i - j, arr[arr.GetIndex(j)]);
+
                 }
-                var b = arr.ToString();
             }
         }
 
@@ -190,7 +190,7 @@ namespace MyConsoleApp.Tests.CMRObjectTests
             for (int i = 0; i < arr.MaxSize * 2; i++)
             {
                 arr.PushFront(i);
-                for (int j = 0; j <= Math.Min(i - 1, arr.MaxSize - 1); j++)
+                for (int j = 0; j <= Math.Min(i, arr.MaxSize - 1); j++)
                 {
                     Assert.AreEqual(i - j, arr[arr.GetIndex(j)]);
                 }

@@ -9,7 +9,7 @@ namespace MyConsoleApp.CMRObject
         protected readonly T[][] _partitions;
         protected readonly T[] _removed;
         public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease)
-            : base(partitionCount, partitionSize, magnitudeIncrease)
+            : base(partitionCount, partitionSize, magnitudeIncrease, false)
         {
             _removed = new T[_partitionCount];
             _partitions = new T[_partitionCount][];
@@ -64,5 +64,6 @@ namespace MyConsoleApp.CMRObject
                 return Interpolate(current, previous, next, offset, maxOffset);
             }
         }
+
     }
 }

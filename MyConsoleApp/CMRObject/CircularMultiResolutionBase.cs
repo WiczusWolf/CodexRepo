@@ -24,10 +24,10 @@ namespace MyConsoleApp.CMRObject
         protected readonly int _magnitudeIncrease;
         protected readonly int _partitionLog;
         protected readonly int _partitionSizeMask;
-        protected int _modulatedItemCount;
+        private int _modulatedItemCount;
         protected int _count;
 
-        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease)
+        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease, bool firstItemTriggersUptick = true)
         {
             if (!partitionSize.IsPowerOfTwo() || partitionSize <= 0)
                 throw new ArgumentException($"Partition Size must be a power of 2, got {partitionSize}.");
@@ -52,7 +52,10 @@ namespace MyConsoleApp.CMRObject
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
                 _offsets[i] = -1;
             }
-
+            if (!firstItemTriggersUptick)
+            {
+                _modulatedItemCount++;
+            }
         }
 
         public void SubscribeValueAdded(Action action) => OnValueAdded.Add(action);
@@ -132,12 +135,12 @@ namespace MyConsoleApp.CMRObject
 
             int maxOffset = _modulos[partitionIndex];
             int offset = _cursors[partitionIndex] % maxOffset;
-            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) - maxOffset * 2;
+            int selectedOffset = QuadraticOffset(itemOffset, maxOffset) + (_offsets[partitionIndex] - 1) * _modulos[partitionIndex];
             return (selectedOffset, maxOffset * 2);
         }
         protected (int offset, int maxOffset) ComputeOffsetFromPartitionEnd(int partitionIndex, int itemOffset)
         {
-            return (itemOffset - _offsets[partitionIndex], _modulos[partitionIndex]);//?
+            return (itemOffset - _offsets[partitionIndex], _modulos[partitionIndex]);
         }
 
         private void AdvanceCounters()

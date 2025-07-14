@@ -41,7 +41,7 @@ namespace MyConsoleApp.CMRObject
         {
             _runningSum += value;
             _removed[0] = _runningSums[0][realItemIndex];
-            _runningSums[0][realItemIndex] = value;
+            _runningSums[0][realItemIndex] = _runningSum;
         }
         protected override void PostItemPush()
         {
@@ -80,7 +80,6 @@ namespace MyConsoleApp.CMRObject
 
                 var (offset, maxOffset) = ComputeOffsetFromPartitionEnd(partitionIndex, itemOffset);
                 return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
-
             }
         }
     }
