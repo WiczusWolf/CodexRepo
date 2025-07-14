@@ -129,11 +129,9 @@ namespace MyConsoleApp.Tests.CMRObjectTests
                 arr.PushFront(i);
                 for (int j = 0; j <= Math.Min(i, 7); j++)
                 {
-                    if (i <= 8 && j == i) continue;//this interpolates with a value that is yet not there
                     var a = arr[arr.GetIndex(j)];
-                    Assert.AreEqual(i - j, arr[arr.GetIndex(j)]);
                 }
-                var b = arr[arr.GetIndex(4)];
+                var b = arr.ToString();
             }
         }
 
@@ -180,6 +178,22 @@ namespace MyConsoleApp.Tests.CMRObjectTests
             for (int i = 0; i < arr.MaxSize; i++)
             {
                 Assert.AreEqual(pushCount - 1 - i, arr[arr.GetIndex(i)]);
+            }
+        }
+
+        [TestMethod]
+        public void PushIntoBigArray()
+        {
+            var arr = new CircularMultiResolutionBaseImpl<float>(4, 16, 4);
+            Assert.AreEqual(4 * 4 * 4 * 16, arr.MaxSize);
+
+            for (int i = 0; i < arr.MaxSize * 2; i++)
+            {
+                arr.PushFront(i);
+                for (int j = 0; j <= Math.Min(i - 1, arr.MaxSize - 1); j++)
+                {
+                    Assert.AreEqual(i - j, arr[arr.GetIndex(j)]);
+                }
             }
         }
     }

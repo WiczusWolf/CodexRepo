@@ -50,7 +50,9 @@ namespace MyConsoleApp.CMRObject
             for (int i = 1; i < _partitionCount; i++)
             {
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
+                _offsets[i] = -1;
             }
+
         }
 
         public void SubscribeValueAdded(Action action) => OnValueAdded.Add(action);
@@ -65,7 +67,6 @@ namespace MyConsoleApp.CMRObject
         public void PushFront(T value)
         {
             AssignFirst(value, _cursors[0]);
-            AdvanceCounters();
             _cursors[0] = (_cursors[0] + 1) % _partitionSize;
 
             for (int i = 1; i < _partitionCount; i++)
@@ -80,6 +81,8 @@ namespace MyConsoleApp.CMRObject
                     break;
                 }
             }
+
+            AdvanceCounters();
             PostItemPush();
             OnValueAdded.Invoke();
         }
