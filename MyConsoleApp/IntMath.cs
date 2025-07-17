@@ -11,6 +11,17 @@ namespace MyConsoleApp
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsPowerOfTwo(this int n) => n > 0 && (n & n - 1) == 0;
+
+        /// <summary>
+        /// Works only for mod = 2^x
+        /// </summary>
+        /// <returns>A positive integer for any positive mod.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int FastAbsMod(int n, int mod)
+        {
+            return n & (mod - 1);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int FastMax(int a, int b)
         {
@@ -33,6 +44,11 @@ namespace MyConsoleApp
             return x + mask ^ mask;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int DivZeroForRange(int value, int min, int max)
+        {
+            return value / max + (value >> 31);
+        }
         public static int Pow(int item, int pow)
         {
             int magnitude = 1;
