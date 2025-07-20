@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text;
 using static MyConsoleApp.IntMath;
+using static MyConsoleApp.INumberMath;
 
 namespace MyConsoleApp.CMRObject
 {
@@ -27,7 +28,7 @@ namespace MyConsoleApp.CMRObject
         private int _modulatedItemCount;
         protected int _count;
 
-        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease, bool firstItemTriggersUptick = true)
+        protected CircularMultiResolutionBase(int partitionCount, int partitionSize, int magnitudeIncrease)
         {
             if (!partitionSize.IsPowerOfTwo() || partitionSize <= 0)
                 throw new ArgumentException($"Partition Size must be a power of 2, got {partitionSize}.");
@@ -50,11 +51,6 @@ namespace MyConsoleApp.CMRObject
             for (int i = 1; i < _partitionCount; i++)
             {
                 _modulos[i] = _modulos[i - 1] * _magnitudeIncrease;
-                _offsets[i] = -1;
-            }
-            if (!firstItemTriggersUptick)
-            {
-                _modulatedItemCount++;
             }
         }
 
@@ -66,11 +62,34 @@ namespace MyConsoleApp.CMRObject
         protected abstract void AssignFirst(T value, int realItemIndex);
         protected abstract void Assign(int realPartitionIndex, int realItemIndex);
         protected abstract void PostItemPush();
+        public CMRIndex CurrentIndex(CMRIndex index)
+        {
+            return index.AddOffset(-_offsets[index.PartitionIndex]);
+        }
+        public CMRIndex OlderIndex(CMRIndex index)
+        {
+            return index.AddOffset(index.Modulo - _offsets[index.PartitionIndex]);
+        }
+        public CMRIndex NewerIndex(CMRIndex index)
+        {
+            return index.AddOffset(-index.Modulo - _offsets[index.PartitionIndex]);
+        }
+        protected T GetWithoutOffset(T[][] partition, CMRIndex index)
+        {
+            return GetWithNonCircularItemIndex(partition, index.PartitionIndex, index.ItemIndex);
+        }
+        protected T GetThisOrRemoved(T[][] partition, T[] removed, CMRIndex index)
+        {
+            return SwitchOnGreaterOrEqualZero(index.ItemIndex - _partitionSize,
+                    GetWithNonCircularItemIndex(partition, index.PartitionIndex, index.ItemIndex),
+                    removed[index.PartitionIndex]);
+        }
 
         public void PushFront(T value)
         {
             AssignFirst(value, _cursors[0]);
             _cursors[0] = (_cursors[0] + 1) % _partitionSize;
+            _modulatedItemCount = (_modulatedItemCount + 1) % _maxSize; //doing it here so first item doesn't trigger upticks.
 
             for (int i = 1; i < _partitionCount; i++)
             {
@@ -96,7 +115,7 @@ namespace MyConsoleApp.CMRObject
                 throw new ArgumentOutOfRangeException(nameof(index), $"Index must be in range 0 to {_maxSize}, got {index}.");
             }
             int partitionIndex = index / _partitionSize;
-            if (partitionIndex == 0) return new CMRIndex(0, index, 0);
+            if (partitionIndex == 0) return new CMRIndex(0, index, 0, _modulos[partitionIndex]);
             if (partitionIndex > 0)
             {
                 partitionIndex = BitOperations.Log2((uint)partitionIndex) / _partitionLog + 1;
@@ -105,7 +124,7 @@ namespace MyConsoleApp.CMRObject
             //int itemC = index + 1 - _modulos[partitionIndex];
             int itemIndex = (itemC / _modulos[partitionIndex]);
             int offset = itemC % _modulos[partitionIndex];
-            return new CMRIndex(partitionIndex, itemIndex, offset);
+            return new CMRIndex(partitionIndex, itemIndex, offset, _modulos[partitionIndex]);
         }
 
         public override string ToString()
@@ -150,7 +169,6 @@ namespace MyConsoleApp.CMRObject
             {
                 _offsets[i] = (_offsets[i] + 1) % _modulos[i];
             }
-            _modulatedItemCount = (_modulatedItemCount + 1) % _maxSize;
         }
     }
 }

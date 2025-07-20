@@ -1,10 +1,9 @@
 using System.Numerics;
-using static MyConsoleApp.IntMath;
 using static MyConsoleApp.INumberMath;
 
 namespace MyConsoleApp.CMRObject
 {
-    public class CircularMultiResolutionSum<T> : CircularMultiResolutionBase<T> where T : INumber<T>
+    public class CircularMultiResolutionSums<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
         private readonly ICMRObject<T> _src;
         private T _runningSum = T.Zero;
@@ -16,7 +15,7 @@ namespace MyConsoleApp.CMRObject
         /// </summary>
         /// <param name="src">Items added to this array will contribute to the running sum. </param>
         /// <param name="anticipatedMaxItemValue">The sum uses variables that increase indefinetely, they have to be reset sometimes. This value should be around average what is added to the array. </param>
-        public CircularMultiResolutionSum(ICMRObject<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
+        public CircularMultiResolutionSums(ICMRObject<T> src, int partitionCount, int partitionSize, int magnitudeIncrease, double anticipatedMaxItemValue = 5000)
             : base(partitionCount, partitionSize, magnitudeIncrease)
         {
             _src = src;
@@ -67,19 +66,24 @@ namespace MyConsoleApp.CMRObject
         {
             get
             {
-
                 int partitionIndex = index.PartitionIndex;
                 int itemIndex = index.ItemIndex;
                 int itemOffset = index.Offset;
 
-                T current = GetWithNonCircularItemIndex(_runningSums, partitionIndex, itemIndex);
-                T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                    GetWithNonCircularItemIndex(_runningSums, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
-                    _removed[partitionIndex]);
-                T previous = GetWithNonCircularItemIndex(_runningSums, partitionIndex, itemIndex - 1);
+                CMRIndex currentIndex = CurrentIndex(index);
+                CMRIndex olderIndex = OlderIndex(index);
 
-                var (offset, maxOffset) = ComputeOffsetFromPartitionEnd(partitionIndex, itemOffset);
-                return Interpolate(current, previous, next, offset, maxOffset) - _removed[_partitionCount - 1];
+                T current = GetWithNonCircularItemIndex(_runningSums, currentIndex.PartitionIndex, currentIndex.ItemIndex);
+                T older = GetThisOrRemoved(_runningSums, _removed, olderIndex);
+
+                T removed = _removed[_partitionCount - 1];
+                T last = GetWithNonCircularItemIndex(_runningSums, _partitionCount - 1, _partitionSize - 1);
+                T delta = last - removed;
+                T deltaOffsetAdjusted = delta * T.CreateTruncating(_offsets[_partitionCount - 1]) / T.CreateTruncating(_modulos[_partitionCount - 1]);
+                T toRemove = removed + deltaOffsetAdjusted;
+                //toRemove = T.Zero;
+                T result = Interpolate(current, older, currentIndex.Offset, currentIndex.Modulo) - toRemove;
+                return result;
             }
         }
     }

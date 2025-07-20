@@ -40,8 +40,8 @@ namespace MyConsoleApp.ReductionObjects
             CMRIndex toIndex = srcArray.GetIndex(to);
             CMRIndex firstIndex = srcArray.GetIndex(0);
             SquaredValue<T> square = new SquaredValue<T>(srcArray, firstIndex);
-            ICMRObject<T> squaredSumSrc = new CircularMultiResolutionSum<T>(square, srcArray.PartitionCount, srcArray.PartitionSize, srcArray.MagnitudeIncrease);
-            ICMRObject<T> sumSrc = new CircularMultiResolutionSum<T>(srcArray, srcArray.PartitionCount, srcArray.PartitionSize, srcArray.MagnitudeIncrease);
+            ICMRObject<T> squaredSumSrc = new CircularMultiResolutionSums<T>(square, srcArray.PartitionCount, srcArray.PartitionSize, srcArray.MagnitudeIncrease);
+            ICMRObject<T> sumSrc = new CircularMultiResolutionSums<T>(srcArray, srcArray.PartitionCount, srcArray.PartitionSize, srcArray.MagnitudeIncrease);
             return (squaredSumSrc, sumSrc, toIndex, fromIndex, (int)(to - from));
         }
 

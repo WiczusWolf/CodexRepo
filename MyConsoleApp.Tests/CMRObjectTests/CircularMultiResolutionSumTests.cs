@@ -5,147 +5,54 @@ namespace MyConsoleApp.Tests;
 [TestClass]
 public class CircularMultiResolutionSumTests
 {
-    private static List<float> PushSequential(CircularMultiResolutionArray<float> arr, int count, float start = 1, float step = 1)
+    private static int Prediction(int i, int divisor)
     {
-        var list = new List<float>();
-        for (int i = 0; i < count; i++)
-        {
-            float value = start + step * i;
-            arr.PushFront(value);
-            list.Add(value);
-        }
-        return list;
+        int quotient = i / divisor;
+        int naiveSum = ((quotient + 1) * quotient * divisor) / 2;
+        int offset = quotient * (divisor - i % divisor - 1);
+        return naiveSum - offset;
     }
-
-    private static float ExpectedRunningSum(IReadOnlyList<float> values, int index)
+    private void AssertCorrectItems(CircularMultiResolutionSums<float> sums, int i, int divisor)
     {
-        float sum = 0f;
-        for (int i = 0; i < values.Count - index; i++)
-        {
-            sum += values[i];
-        }
-        return sum;
-    }
+        int count = sums.Count;
+        float predAdjustment = 0;
 
-    private static void VerifySums(CircularMultiResolutionArray<float> arr,
-                                   CircularMultiResolutionSum<float> sum,
-                                   List<float> values)
-    {
-        for (int i = 0; i < sum.Count; i++)
+        if (i > sums.MaxSize)
         {
-            var expected = ExpectedRunningSum(values, i);
-            var actual = sum[sum.GetIndex((int)i)];
-            if (i < sum.PartitionSize)
-            {
-                Assert.AreEqual(expected, actual, 1e-3, $"Index {i}");
-            }
-            else
-            {
-                var err = Math.Abs(actual - expected) / Math.Abs(expected);
-                Assert.IsTrue(err <= 0.025, $"Index {i} error {err:P}");
-            }
-        }
-    }
-
-    [TestMethod]
-    public void test1()
-    {
-        var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
-        for (int i = 0; i < 25; i++)
-        {
-            arr.PushFront(i);
-            var a = sum.ToString();
+            predAdjustment -= Prediction(i - sums.MaxSize, divisor);
         }
 
+        for (int j = 0; j <= Math.Min(i, sums.MaxSize - 1); j++)
+        {
+            float acutal = sums[sums.GetIndex(j)];
+            float expected = Prediction(i - j, divisor) + predAdjustment;
+            Assert.AreEqual(expected, acutal);
+        }
     }
-
-
     [TestMethod]
-    public void HighResolutionSum_MatchesRunningTotals()
-    {
-        var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
-        var values = PushSequential(arr, 5);
-        VerifySums(arr, sum, values);
-    }
-
-    [TestMethod]
-    public void MultiPartitionSum_MatchesRunningTotals()
-    {
-        var arr = new CircularMultiResolutionArray<float>(2, 4, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 3, 4, 2);
-        var values = PushSequential(arr, 8, 1, 0); // constant values
-        VerifySums(arr, sum, values);
-    }
-
-    [TestMethod]
-    public void LargerPartition_AccuracyWithinTolerance()
-    {
-        var arr = new CircularMultiResolutionArray<float>(2, 8, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 3, 8, 2);
-        var values = PushSequential(arr, 10, 1, 0);
-        VerifySums(arr, sum, values);
-    }
-
-    [TestMethod]
-    public void LargerIncrease_AccuracyWithinTolerance()
+    public void SimplePush()
     {
         var arr = new CircularMultiResolutionArray<float>(3, 8, 4);
-        var sum = new CircularMultiResolutionSum<float>(arr, 3, 8, 4);
-        var values = PushSequential(arr, 12, 1, 0);
-        VerifySums(arr, sum, values);
-    }
+        int magnitudeStep = 2;
+        var sums = new CircularMultiResolutionSums<float>(arr, 2, magnitudeStep * 2, magnitudeStep);
 
-    [TestMethod]
-    public void EventIsRaisedWithCurrentSum()
-    {
-        var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
-        float lastValue = 0f;
-        sum.SubscribeValueAdded(() => lastValue = sum.First());
-        var values = PushSequential(arr, 5);
-        Assert.AreEqual(sum[sum.GetIndex(0)], lastValue, 1e-3);
-    }
-
-    [TestMethod]
-    public void GetIndexIndexer_ReturnSameValue()
-    {
-        var arr = new CircularMultiResolutionArray<float>(2, 4, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 3, 4, 2);
-        var values = PushSequential(arr, 6);
-        for (int i = 0; i < sum.Count; i++)
+        for (int i = magnitudeStep; i < 35; i++)
         {
-            var idx = sum.GetIndex((int)i);
-            Assert.AreEqual(sum[idx], sum[idx], 1e-5); // access to ensure index works
+            arr.PushFront(i / magnitudeStep);
+            AssertCorrectItems(sums, i, magnitudeStep);
         }
     }
-
     [TestMethod]
-    public void CountReflectsNumberOfItems()
+    public void BigPush()
     {
-        var arr = new CircularMultiResolutionArray<float>(1, 8, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 2, 8, 2);
-        PushSequential(arr, 7);
-        Assert.AreEqual(7, sum.Count);
-    }
-
-    [TestMethod]
-    public void ResetMaintainsAccuracyWhenThresholdExceeded()
-    {
-        var arr = new CircularMultiResolutionArray<float>(3, 4, 2);
-        // threshold of 5000 => anticipatedMaxItemValue = 5000 / (sum.MaxSize * 2)
-        var sum = new CircularMultiResolutionSum<float>(arr, 4, 4, 2, 78.125);
-        var values = PushSequential(arr, 8, 1000, 0); // running sum exceeds 5000
-        VerifySums(arr, sum, values);
-    }
-
-    [TestMethod]
-    public void CountCappedAfterReset()
-    {
-        var arr = new CircularMultiResolutionArray<float>(3, 4, 2);
-        var sum = new CircularMultiResolutionSum<float>(arr, 4, 4, 2, 78.125);
-        PushSequential(arr, sum.MaxSize + 10, 1000, 0);
-        Assert.AreEqual(sum.MaxSize, sum.Count);
+        int magnitudeStep = 4;
+        var arr = new CircularMultiResolutionArray<float>(3, 8, 4);
+        var sums = new CircularMultiResolutionSums<float>(arr, 3, magnitudeStep * 2, magnitudeStep);
+        int divisor = magnitudeStep * magnitudeStep;
+        for (int i = divisor; i < 50; i++)
+        {
+            arr.PushFront(i / divisor);
+            AssertCorrectItems(sums, i, divisor);
+        }
     }
 }

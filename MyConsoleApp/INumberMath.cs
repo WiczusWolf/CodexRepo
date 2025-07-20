@@ -22,5 +22,10 @@ namespace MyConsoleApp
             T currFrac = T.One - frac;
             return current * currFrac + SwitchOnGreaterOrEqualZero(offset, frac * previous, frac * next);
         }
+        public static T Interpolate<T>(T current, T next, int offset, int maxOffset) where T : INumber<T>
+        {
+            var frac = T.CreateTruncating(offset) / T.CreateTruncating(maxOffset);
+            return current + (next - current) * frac;
+        }
     }
 }

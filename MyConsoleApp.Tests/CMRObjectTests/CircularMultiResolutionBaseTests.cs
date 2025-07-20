@@ -142,15 +142,15 @@ namespace MyConsoleApp.Tests.CMRObjectTests
 
             var expectations = new (int index, CMRIndex expected)[]
             {
-                (0, new CMRIndex(0, 0, 0)),
-                (3, new CMRIndex(0, 3, 0)),
-                (4, new CMRIndex(1, 2, 0)),
-                (5, new CMRIndex(1, 2, 1)),
-                (7, new CMRIndex(1, 3, 1)),
-                (8, new CMRIndex(2, 2, 0)),
-                (9, new CMRIndex(2, 2, 1)),
-                (12, new CMRIndex(2, 3, 0)),
-                (15, new CMRIndex(2, 3, 3)),
+                (0, new CMRIndex(0, 0, 0 , 1)),
+                (3, new CMRIndex(0, 3, 0 , 1)),
+                (4, new CMRIndex(1, 2, 0 , 4)),
+                (5, new CMRIndex(1, 2, 1 , 4)),
+                (7, new CMRIndex(1, 3, 1 , 4)),
+                (8, new CMRIndex(2, 2, 0 , 16)),
+                (9, new CMRIndex(2, 2, 1 , 16)),
+                (12, new CMRIndex(2, 3, 0, 16)),
+                (15, new CMRIndex(2, 3, 3, 16)),
             };
 
             foreach (var (index, expected) in expectations)

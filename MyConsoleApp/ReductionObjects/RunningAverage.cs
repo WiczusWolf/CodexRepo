@@ -7,12 +7,12 @@ namespace MyConsoleApp.ReductionObjects
     {
         public readonly EventHandlerSync OnItemAdded = new();
         public T LastResult => _lastResult;
-        private CircularMultiResolutionSum<T> _circularMultiResolutionArray;
+        private CircularMultiResolutionSums<T> _circularMultiResolutionArray;
         private CMRIndex _startIndex;
         private CMRIndex _endIndex;
         private T _itemCount;
         private T _lastResult = T.Zero;
-        public RunningAverage(CircularMultiResolutionSum<T> src, int to, int from = 0)
+        public RunningAverage(CircularMultiResolutionSums<T> src, int to, int from = 0)
         {
             if (to <= from) throw new ArgumentException("To needs to be bigger than from. ");
             _circularMultiResolutionArray = src;

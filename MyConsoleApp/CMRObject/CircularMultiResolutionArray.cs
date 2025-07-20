@@ -1,34 +1,42 @@
 using System.Numerics;
 using static MyConsoleApp.IntMath;
-using static MyConsoleApp.INumberMath;
 
 namespace MyConsoleApp.CMRObject
 {
     public class CircularMultiResolutionArray<T> : CircularMultiResolutionBase<T> where T : INumber<T>
     {
-        protected readonly T[][] _partitions;
-        protected readonly T[] _removed;
+        protected readonly T[][] _averages;
+        protected readonly T[][] _biases;
+        protected readonly T[] _removedAverages;
+        protected readonly T[] _removedBiases;
         public CircularMultiResolutionArray(int partitionCount, int partitionSize, int magnitudeIncrease)
-            : base(partitionCount, partitionSize, magnitudeIncrease, false)
+            : base(partitionCount, partitionSize, magnitudeIncrease)
         {
-            _removed = new T[_partitionCount];
-            _partitions = new T[_partitionCount][];
+            _removedBiases = new T[_partitionCount];
+            _removedAverages = new T[_partitionCount];
+            _averages = new T[_partitionCount][];
+            _biases = new T[_partitionCount][];
             for (int i = 0; i < _partitionCount; i++)
             {
-                _partitions[i] = new T[_partitionSize];
+                _averages[i] = new T[_partitionSize];
+                _biases[i] = new T[_partitionSize];
             }
         }
 
-        public override T First() => GetWithNonCircularItemIndex(_partitions, 0, 0);
+        public override T First() => GetWithNonCircularItemIndex(_averages, 0, 0);
 
         protected override void Assign(int realPartitionIndex, int realItemIndex)
         {
-            _removed[realPartitionIndex] = _partitions[realPartitionIndex][realItemIndex];
-            _partitions[realPartitionIndex][realItemIndex] = AverageFromPartition(realPartitionIndex - 1);
+            _removedAverages[realPartitionIndex] = _averages[realPartitionIndex][realItemIndex];
+            _removedBiases[realPartitionIndex] = _biases[realPartitionIndex][realItemIndex];
+            _averages[realPartitionIndex][realItemIndex] = AverageFromPartition(realPartitionIndex - 1);
+            _biases[realPartitionIndex][realItemIndex] = _biases[realPartitionIndex - 1][_magnitudeIncrease - 1];
+            _biases[realPartitionIndex][realItemIndex] = GetWithNonCircularItemIndex(_biases, 0, 0);
         }
         protected override void AssignFirst(T value, int realItemIndex)
         {
-            _partitions[0][realItemIndex] = value;
+            _averages[0][realItemIndex] = value;
+            _biases[0][realItemIndex] = value;
         }
         protected override void PostItemPush()
         {
@@ -40,7 +48,7 @@ namespace MyConsoleApp.CMRObject
             for (int i = 0; i < _magnitudeIncrease; i++)
             {
                 realItemIndex = realItemIndex - 1 & _partitionSizeMask;
-                sum += _partitions[partitionIndex][realItemIndex];
+                sum += _averages[partitionIndex][realItemIndex];
             }
 
             return sum / T.CreateTruncating(_magnitudeIncrease);
@@ -54,14 +62,13 @@ namespace MyConsoleApp.CMRObject
                 int itemIndex = index.ItemIndex;
                 int itemOffset = index.Offset;
 
-                T current = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex);
-                T next = SwitchOnGreaterOrEqualZero(itemIndex - _partitionSize + 1,
-                    GetWithNonCircularItemIndex(_partitions, partitionIndex, FastMin(_partitionSize - 1, itemIndex + 1)),
-                    _removed[partitionIndex]);
-                T previous = GetWithNonCircularItemIndex(_partitions, partitionIndex, itemIndex - 1);
 
-                var (offset, maxOffset) = ComputeOffsetFromHalfPartition(partitionIndex, itemOffset);
-                return Interpolate(current, previous, next, offset, maxOffset);
+                CMRIndex currentIndex = CurrentIndex(index);
+                T currentBias = GetWithNonCircularItemIndex(_biases, currentIndex.PartitionIndex, currentIndex.ItemIndex);
+                T currentAverage = GetWithNonCircularItemIndex(_averages, currentIndex.PartitionIndex, currentIndex.ItemIndex);
+                int itemCount = currentIndex.Modulo;
+                T delta = T.CreateTruncating(2) * (currentBias - currentAverage) / T.CreateTruncating(FastMax(itemCount - 1, 1));
+                return currentBias - delta * T.CreateTruncating(currentIndex.Offset);
             }
         }
 
